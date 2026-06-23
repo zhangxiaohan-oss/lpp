@@ -4,5 +4,7 @@ out/
 tmp/
 output/
 next-dev*.log
+localtunnel*.log
+tunnel*.log
 .env*
 !.env.example
