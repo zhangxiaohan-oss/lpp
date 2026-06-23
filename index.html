@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>lpphatshop.com</title>
+    <meta
+      name="description"
+      content="Static source-site recreation for LPP Hat Shop with real public product imagery."
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="promo-strip">
+      <strong>First purchase with a 10% discount, use promo code: WDPILLS23</strong>
+    </div>
+
+    <header class="site-header">
+      <a class="brand" href="#home" aria-label="LPP home">
+        <img src="assets/source-hero.png" alt="LPP Hat Shop logo">
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        Menu
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Main navigation">
+        <a href="#home">Home</a>
+        <a href="#shop">Shop</a>
+        <a href="#about">About Us</a>
+        <a href="#customize">Customize</a>
+        <a href="#tracking">Orders Tracking</a>
+        <a href="#contact">Contact Us</a>
+      </nav>
+      <div class="header-actions" aria-label="Store actions">
+        <button class="icon-button" type="button" data-panel="wishlist">Wishlist <span id="wish-count">0</span></button>
+        <button class="icon-button" type="button" data-panel="compare">Compare <span id="compare-count">0</span></button>
+        <button class="cart-button" type="button" data-panel="cart">Cart <span id="cart-count">0</span></button>
+      </div>
+    </header>
+
+    <main>
+      <section id="home" class="hero">
+        <div class="hero-media">
+          <img src="assets/source-banner-model-generated.png" alt="Model wearing a straw hat by the coast">
+        </div>
+        <div class="hero-copy">
+          <p class="eyebrow">Natural straw hats</p>
+          <h1>Feel <span>Cool</span> and <span>Stylish</span> With Our Straw Hats</h1>
+          <p>
+            Our mission is to keep you comfy and carefree, for this we use only natural
+            and high-quality materials necessary to craft an extraordinary straw hat.
+          </p>
+          <a class="button button-primary" href="#shop">Shop now</a>
+        </div>
+      </section>
+
+      <section class="service-strip" aria-label="Store benefits">
+        <article>
+          <span class="service-icon">01</span>
+          <h2>Free Shipping from $30!</h2>
+          <p>Simple purchasing for summer-ready straw hats and sun accessories.</p>
+        </article>
+        <article>
+          <span class="service-icon">02</span>
+          <h2>Natural material focus</h2>
+          <p>Woven straw, hollow straw, and wide-brim protection for outdoor use.</p>
+        </article>
+        <article>
+          <span class="service-icon">03</span>
+          <h2>Custom order support</h2>
+          <p>Logo patches, color choices, and wholesale quantities handled by service.</p>
+        </article>
+      </section>
+
+      <section class="category-section">
+        <div class="section-heading">
+          <h2>Popular Categories</h2>
+        </div>
+        <div class="category-grid">
+          <a class="category-card" href="#shop">
+            <img src="assets/category-01.jpg" alt="Straw hat category">
+            <span>Straw hat</span>
+          </a>
+          <a class="category-card" href="#shop">
+            <img src="assets/category-02.jpg" alt="Beach straw hats">
+            <span>Beach hats</span>
+          </a>
+          <a class="category-card" href="#shop">
+            <img src="assets/category-03.jpg" alt="Lifeguard straw hats">
+            <span>Lifeguard</span>
+          </a>
+          <a class="category-card" href="#customize">
+            <img src="assets/category-04.jpg" alt="Custom logo straw hats">
+            <span>Customize</span>
+          </a>
+        </div>
+      </section>
+
+      <section id="shop" class="shop-section">
+        <div class="section-heading section-heading-row">
+          <div>
+            <h2>Bestsellers</h2>
+            <p>Real public product imagery and product data from lpphatshop.com.</p>
+          </div>
+          <a class="button button-ghost" href="https://lpphatshop.com/shop/" target="_blank" rel="noreferrer">View source shop</a>
+        </div>
+
+        <div class="shop-tools">
+          <label class="search-box">
+            <span>Search</span>
+            <input id="search-input" type="search" placeholder="Search products">
+          </label>
+          <label>
+            <span>Filter</span>
+            <select id="filter-select">
+              <option value="all">All products</option>
+              <option value="custom">Custom logo</option>
+              <option value="lifeguard">Lifeguard</option>
+              <option value="surf">Surf and beach</option>
+              <option value="wholesale">Wholesale</option>
+            </select>
+          </label>
+          <label>
+            <span>Sort</span>
+            <select id="sort-select">
+              <option value="featured">Featured order</option>
+              <option value="price-asc">Price low to high</option>
+              <option value="price-desc">Price high to low</option>
+              <option value="name">Name A-Z</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="product-grid" class="product-grid" aria-live="polite"></div>
+      </section>
+
+      <section id="about" class="about-section">
+        <div class="about-copy">
+          <p class="eyebrow">About LPP</p>
+          <h2>Effective Straw Hats For Your Comfort</h2>
+          <p>
+            Our straw hats and sun-protective accessories are designed to provide essential
+            shade that may be lacking in your daily outings. These products are tested to
+            ensure their durability and practicality.
+          </p>
+          <ul>
+            <li>Natural straw and woven textures</li>
+            <li>Wide-brim shapes for shade</li>
+            <li>Beach, surf, fishing, garden, and work use</li>
+            <li>Wholesale custom logo support</li>
+          </ul>
+        </div>
+        <div class="about-media">
+          <img src="assets/product-11.png" alt="Beach straw hat product">
+        </div>
+      </section>
+
+      <section id="customize" class="custom-section">
+        <div>
+          <p class="eyebrow">Customize</p>
+          <h2>Custom logo straw hats</h2>
+          <p>
+            Choose colors and sizes, then contact customer service with your requirements.
+            Wholesale custom pricing is tiered by quantity, with shipping quoted separately.
+          </p>
+        </div>
+        <div class="pricing-ladder">
+          <article><span>50-200 units</span><strong>$6.19</strong></article>
+          <article><span>200-500 units</span><strong>$4.50</strong></article>
+          <article><span>500+ units</span><strong>$3.50</strong></article>
+        </div>
+      </section>
+
+      <section class="testimonials" aria-label="Customer feedback">
+        <div class="section-heading">
+          <h2>Feedback From Real Customers</h2>
+        </div>
+        <div class="quote-grid">
+          <figure>
+            <blockquote>Great selection of straw hats and sun hats! They have everything I need for my summer styling and sun protection goals.</blockquote>
+            <figcaption>Brooklyn Simmons</figcaption>
+          </figure>
+          <figure>
+            <blockquote>Excellent customer service! The staff is knowledgeable and always ready to help me find the perfect straw hat.</blockquote>
+            <figcaption>Jerome Bell</figcaption>
+          </figure>
+          <figure>
+            <blockquote>Affordable prices and high-quality straw hats. I never have to worry about breaking the bank.</blockquote>
+            <figcaption>Kathryn Murphy</figcaption>
+          </figure>
+          <figure>
+            <blockquote>Wide range of handcrafted and natural straw hats. I appreciate their commitment to providing such quality pieces.</blockquote>
+            <figcaption>Ronald Richards</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="tracking" class="tracking-section">
+        <div>
+          <p class="eyebrow">Orders Tracking</p>
+          <h2>Track your order</h2>
+          <p>Enter your order ID and billing email to check the status of your purchase.</p>
+        </div>
+        <form class="tracking-card">
+          <label>
+            Order ID
+            <input type="text" placeholder="LPP-10024">
+          </label>
+          <label>
+            Billing email
+            <input type="email" placeholder="you@example.com">
+          </label>
+          <button class="button button-primary" type="button">Track order</button>
+        </form>
+      </section>
+
+      <section id="contact" class="contact-section">
+        <div class="section-heading">
+          <h2>Contact Us</h2>
+        </div>
+        <div class="contact-grid">
+          <article>
+            <h3>Address</h3>
+            <p>1901 Thornridge Cir.<br>Shiloh, Hawaii 81063</p>
+          </article>
+          <article>
+            <h3>Hours</h3>
+            <p>Monday-Tuesday: 10.00am-4.00pm by appointment<br>Wednesday-Saturday: 10.00am-4.00pm<br>Sunday: Closed</p>
+          </article>
+          <article>
+            <h3>Phone / Email</h3>
+            <p>(956) 238-7908<br>mail@mail.com</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="pages" class="pages-section">
+        <div class="section-heading">
+          <h2>Store Pages</h2>
+          <p>Public source pages represented in this static recreation.</p>
+        </div>
+        <div id="page-grid" class="page-grid"></div>
+      </section>
+    </main>
+
+    <aside id="side-panel" class="side-panel" aria-hidden="true">
+      <div class="panel-header">
+        <h2 id="panel-title">Cart</h2>
+        <button id="close-panel" type="button" aria-label="Close panel">Close</button>
+      </div>
+      <div id="panel-content" class="panel-content"></div>
+    </aside>
+
+    <div id="product-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+      <div class="modal-card">
+        <button id="close-modal" class="modal-close" type="button" aria-label="Close product details">Close</button>
+        <div id="modal-content"></div>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div>
+        <a class="brand footer-brand" href="#home"><img src="assets/source-hero.png" alt="LPP Hat Shop logo"></a>
+        <p>Static recreation based on the public LPP Hat Shop pages and product imagery.</p>
+      </div>
+      <div class="footer-links">
+        <a href="#shop">Shop</a>
+        <a href="#customize">Customize</a>
+        <a href="#tracking">Orders Tracking</a>
+        <a href="#contact">Contact</a>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

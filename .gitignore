@@ -1,0 +1,8 @@
+node_modules/
+.next/
+out/
+tmp/
+output/
+next-dev*.log
+.env*
+!.env.example
