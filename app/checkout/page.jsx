@@ -3,12 +3,13 @@ import { Price } from "../currency";
 import { findProduct } from "../data";
 
 export const metadata = {
-  title: "结算 | LPP 草帽店"
+  title: "结账 | LPP 草帽店"
 };
 
 export default async function CheckoutPage({ searchParams }) {
   const query = await searchParams;
   const product = query?.product ? findProduct(query.product) : null;
+  const quantity = typeof query?.qty === "string" ? Number(query.qty) || 1 : 1;
 
   return (
     <>
@@ -16,7 +17,7 @@ export default async function CheckoutPage({ searchParams }) {
       <main>
         <section className="checkout-page">
           <div>
-            <p className="eyebrow">结算</p>
+            <p className="eyebrow">结账</p>
             <h1>填写购买信息</h1>
             <p>当前页面为静态购买流程演示，可作为后续真实支付、地址和库存系统的入口。</p>
             {product ? (
@@ -27,6 +28,7 @@ export default async function CheckoutPage({ searchParams }) {
                   <div className="price">
                     <Price price={product.price} priceLabel={product.priceLabel} compact />
                   </div>
+                  <span>数量：{quantity}</span>
                 </div>
               </article>
             ) : (

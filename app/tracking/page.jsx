@@ -13,7 +13,7 @@ export default function TrackingPage() {
           <div>
             <p className="eyebrow">订单追踪</p>
             <h1>查询你的订单</h1>
-            <p>输入订单编号和账单邮箱，即可查看购买后的订单状态。</p>
+            <p>输入订单编号和账单邮箱，即可查看购买后的订单状态。当前为前端演示表单，方便展示完整购物链路。</p>
           </div>
           <form className="tracking-card">
             <label>

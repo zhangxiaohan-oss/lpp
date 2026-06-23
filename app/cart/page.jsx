@@ -1,6 +1,4 @@
-import { Footer, Header } from "../components";
-import { Price } from "../currency";
-import { findProduct } from "../data";
+import { Footer, Header, StorageCollectionView } from "../components";
 
 export const metadata = {
   title: "购物车 | LPP 草帽店"
@@ -8,7 +6,8 @@ export const metadata = {
 
 export default async function CartPage({ searchParams }) {
   const query = await searchParams;
-  const product = query?.product ? findProduct(query.product) : null;
+  const initialProductSlug = typeof query?.product === "string" ? query.product : "";
+  const initialQuantity = typeof query?.qty === "string" ? Number(query.qty) : 1;
 
   return (
     <>
@@ -17,28 +16,10 @@ export default async function CartPage({ searchParams }) {
         <section className="page-hero">
           <p className="eyebrow">购物车</p>
           <h1>确认你的商品</h1>
-          <p>这是当前静态站的购买演示页，后续可接入真实库存、账户和支付系统。</p>
+          <p>这里是前端演示购物车，会保存你本次浏览器里加入的商品，适合展示购买流程。</p>
         </section>
         <section className="cart-page">
-          {product ? (
-            <article className="cart-summary">
-              <img src={product.image} alt={`${product.title} 商品图`} />
-              <div>
-                <h2>{product.title}</h2>
-                <p>{product.description}</p>
-                <div className="price">
-                  <Price price={product.price} priceLabel={product.priceLabel} />
-                </div>
-              </div>
-              <a className="button button-primary" href={`/checkout?product=${product.slug}`}>
-                去结算
-              </a>
-            </article>
-          ) : (
-            <div className="panel-empty">
-              购物车暂无商品。请先前往 <a href="/shop">商店</a> 选择商品。
-            </div>
-          )}
+          <StorageCollectionView type="cart" initialProductSlug={initialProductSlug} initialQuantity={initialQuantity} />
         </section>
       </main>
       <Footer />

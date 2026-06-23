@@ -1,4 +1,4 @@
-import { Footer, Header } from "../components";
+import { Footer, Header, ServicePromises } from "../components";
 
 export const metadata = {
   title: "关于我们 | LPP 草帽店"
@@ -14,7 +14,7 @@ export default function AboutPage() {
             <p className="eyebrow">关于 LPP</p>
             <h1>为舒适户外而生的实用草帽</h1>
             <p>
-              我们的草帽和遮阳配件专为日常户外活动设计，提供必要遮挡和舒适佩戴体验。每款产品都注重耐用性与实用性。
+              LPP 专注海滩、冲浪、园艺、钓鱼和户外工作场景。我们希望草帽不只是遮阳工具，也能成为团队、品牌和夏季活动的视觉符号。
             </p>
             <ul>
               <li>天然草编与真实编织质感</li>
@@ -27,6 +27,7 @@ export default function AboutPage() {
             <img src="/assets/product-11.png" alt="海滩草帽商品" />
           </div>
         </section>
+        <ServicePromises />
       </main>
       <Footer />
     </>

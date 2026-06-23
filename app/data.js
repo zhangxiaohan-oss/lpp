@@ -7,7 +7,68 @@ export const navItems = [
   { label: "联系我们", href: "/contact" }
 ];
 
-export const products = [
+export const categories = [
+  {
+    label: "海滩草帽",
+    filter: "beach",
+    image: "/assets/category-02.jpg",
+    description: "轻便透气，适合旅行、度假和日常防晒。"
+  },
+  {
+    label: "救生员帽",
+    filter: "lifeguard",
+    image: "/assets/category-03.jpg",
+    description: "宽檐遮阳，户外工作和冲浪场景都稳。"
+  },
+  {
+    label: "冲浪系列",
+    filter: "surf",
+    image: "/assets/category-01.jpg",
+    description: "美式海岸气质，适合团队和活动采购。"
+  },
+  {
+    label: "Logo 定制",
+    filter: "custom",
+    image: "/assets/category-04.jpg",
+    description: "贴章、印花、帽绳和批量方案可沟通。"
+  }
+];
+
+export const heroSlides = [
+  {
+    eyebrow: "天然草编帽",
+    title: "戴上我们的草帽，保持清爽与有型",
+    description: "为海滩、冲浪、钓鱼、园艺和户外工作设计的宽檐草帽，兼顾防晒、透气和品牌展示。",
+    image: "/assets/source-banner-model-generated.png",
+    cta: "立即选购",
+    href: "/shop"
+  },
+  {
+    eyebrow: "批发与定制",
+    title: "让你的 Logo 出现在夏天最显眼的位置",
+    description: "支持贴章、印花、帽底图案和团队采购，适合冲浪店、度假村、活动周边与户外团队。",
+    image: "/assets/category-04.jpg",
+    cta: "咨询定制",
+    href: "/customize"
+  }
+];
+
+export const servicePromises = [
+  {
+    title: "满 $30 免费配送",
+    description: "常规商品支持快速发货，批量订单可单独确认运输方案。"
+  },
+  {
+    title: "天然材料优先",
+    description: "草编纹理、宽檐结构和透气帽身，适合长时间户外佩戴。"
+  },
+  {
+    title: "支持定制订单",
+    description: "Logo 贴章、颜色、帽绳、包装和数量需求都可以前端提交询价。"
+  }
+];
+
+const baseProducts = [
   {
     id: 29327,
     slug: "customize",
@@ -18,23 +79,23 @@ export const products = [
     source: "https://lpphatshop.com/product/customize/",
     tags: ["custom", "wholesale", "straw hat"],
     description:
-      "可选择颜色和尺码，并将订单需求提交给客服。批发价：50-200 件每件 $6.19，200-500 件每件 $4.50，500 件以上每件 $3.50。运费另行报价。"
+      "可选择颜色和尺码，并将订单需求提交给客服。批发价：50-200 件每件 $6.19，200-500 件每件 $4.50，500 件以上每件 $3.50，运费另行报价。"
   },
   {
     id: 29321,
     slug: "wholesale-custom-logo-surfing-beach-straw-hats",
-    title: "夏季成人冲浪海滩草帽批发定制，自然镂空草编，可定制 Logo，男女通用救生员草帽",
+    title: "夏季成人冲浪海滩草帽批发定制",
     price: 30.9,
     image: "/assets/product-02.jpg",
     source:
       "https://lpphatshop.com/product/wholesale-custom-made-logo-summer-adult-surfing-beach-straw-hats-natural-hollow-straw-bulk-mens-and-womens-lifeguard-straw-hats/",
-    tags: ["custom", "wholesale", "surf"],
-    description: "适合批量采购的夏季草帽，支持 Logo 定制，自然镂空草编结构，男女通用，适合救生员和户外场景。"
+    tags: ["custom", "wholesale", "surf", "beach"],
+    description: "适合批量采购的夏季草帽，支持 Logo 定制，自然镂空草编结构，男女通用。"
   },
   {
     id: 29315,
     slug: "american-style-lifeguard-straw-hats",
-    title: "夏季防晒救生员草帽批发，美式草帽造型，可定制 Logo 印花，适合冲浪海滩",
+    title: "美式救生员冲浪草帽",
     price: 29.9,
     image: "/assets/product-03.jpg",
     source:
@@ -45,17 +106,17 @@ export const products = [
   {
     id: 29309,
     slug: "plain-wide-brim-sun-hat",
-    title: "救生员、农场和园艺场景适用的素色宽檐遮阳草帽",
+    title: "素色宽檐户外遮阳草帽",
     price: 28.9,
     image: "/assets/product-04.jpeg",
     source: "https://lpphatshop.com/product/plain-wide-brimmed-sun-hat-for-lifeguards-farmers-and-gardeners/",
-    tags: ["lifeguard", "outdoor"],
+    tags: ["lifeguard", "outdoor", "beach"],
     description: "素色宽檐遮阳帽，适合救生员、农场、园艺和日常户外防晒。"
   },
   {
     id: 29303,
     slug: "natural-straw-lifeguard-logo-print-hat",
-    title: "夏季防晒救生员自然草帽批发，美式草帽造型，可定制 Logo 印花",
+    title: "自然草编 Logo 印花救生员帽",
     price: 30.9,
     image: "/assets/product-05.jpeg",
     source:
@@ -66,7 +127,7 @@ export const products = [
   {
     id: 29297,
     slug: "wide-brim-summer-fishing-straw-hat",
-    title: "夏季男士宽檐印花草帽批发，适合海滩、救生员、冲浪、狩猎和钓鱼",
+    title: "宽檐钓鱼冲浪草帽",
     price: 28.9,
     image: "/assets/product-06.jpeg",
     source:
@@ -77,7 +138,7 @@ export const products = [
   {
     id: 29291,
     slug: "custom-logo-patch-lifeguard-straw-hat",
-    title: "夏季遮阳草帽批发定制，自然草编救生员草帽，可定制 Logo 贴章",
+    title: "Logo 贴章救生员草帽",
     price: 28.9,
     image: "/assets/product-07.png",
     source:
@@ -88,7 +149,7 @@ export const products = [
   {
     id: 29284,
     slug: "unisex-beach-lifeguard-straw-hat",
-    title: "夏季救生员防晒宽檐海滩草帽，男女通用，可定制 Logo 贴章印花，美式冲浪海滩风",
+    title: "男女通用海滩救生员草帽",
     price: 30.9,
     image: "/assets/product-08.png",
     source:
@@ -99,7 +160,7 @@ export const products = [
   {
     id: 29278,
     slug: "applique-embroidered-logo-lifeguard-hat",
-    title: "带贴布刺绣 Logo 的救生员草帽",
+    title: "刺绣 Logo 救生员草帽",
     price: 29.9,
     image: "/assets/product-09.png",
     source: "https://lpphatshop.com/product/lifeguard-straw-hat-with-applique-embroidered-logo/",
@@ -109,18 +170,18 @@ export const products = [
   {
     id: 29272,
     slug: "custom-panama-beach-lifeguard-hat",
-    title: "夏季遮阳帽定制，自然草编救生员帽，可定制 Logo 贴章，适合冲浪探险和巴拿马海滩风",
+    title: "巴拿马海滩风定制草帽",
     price: 28.9,
     image: "/assets/product-10.png",
     source:
       "https://lpphatshop.com/product/custom-summer-sun-hat-natural-grass-lifeguard-hat-custom-logo-patch-surfing-adventure-panama-beach-hat/",
     tags: ["custom", "lifeguard", "surf", "beach"],
-    description: "自然草编夏季遮阳帽，适合救生员、冲浪探险、巴拿马海滩造型和定制 Logo 贴章。"
+    description: "自然草编夏季遮阳帽，适合救生员、冲浪探险、巴拿马海滩造型和 Logo 定制。"
   },
   {
     id: 29266,
     slug: "custom-printed-surfing-straw-hats",
-    title: "高品质夏季冲浪草帽批发定制，海滩帽、救生员草帽均可印制 Logo",
+    title: "高品质冲浪草帽批发定制",
     price: 30.9,
     image: "/assets/product-11.png",
     source:
@@ -131,7 +192,7 @@ export const products = [
   {
     id: 29260,
     slug: "fashion-custom-logo-beach-straw-hat",
-    title: "男女通用时尚夏季海滩草帽，可定制 Logo，自然草编冲浪救生员宽檐帽",
+    title: "时尚 Logo 海滩草帽",
     price: 29.9,
     image: "/assets/product-12.png",
     source:
@@ -142,18 +203,18 @@ export const products = [
   {
     id: 29254,
     slug: "striped-american-straw-hat",
-    title: "美式草帽批发定制，宽檐条纹海滩帽，夏季冲浪防晒救生员户外 Logo 草帽",
+    title: "条纹美式冲浪草帽",
     price: 28.9,
     image: "/assets/product-13.png",
     source:
       "https://lpphatshop.com/product/wholesale-custom-printed-american-straw-hats-beach-hats-wide-brimmed-striped-surfing-summer-sun-protection-lifeguard-logo-outdoor-straw-hats/",
     tags: ["custom", "surf", "lifeguard", "wholesale"],
-    description: "宽檐条纹美式草帽，适合海滩、冲浪、防晒、救生员和户外 Logo 定制使用。"
+    description: "宽檐条纹美式草帽，适合海滩、冲浪、防晒、救生员和户外 Logo 定制。"
   },
   {
     id: 29248,
     slug: "wholesale-american-beach-straw-hat",
-    title: "夏季救生员草帽批发，美式草帽和海滩帽",
+    title: "美式海滩草帽批发",
     price: 30.9,
     image: "/assets/product-14.png",
     source: "https://lpphatshop.com/product/wholesale-summer-lifeguard-straw-hats-american-straw-hats-beach-hats/",
@@ -163,24 +224,82 @@ export const products = [
   {
     id: 29242,
     slug: "upf50-american-flag-surfing-hat",
-    title: "男女通用宽檐钓鱼草帽，UPF 50 防晒，大檐海滩青年款，蓝黑美国旗救生员冲浪草帽",
+    title: "UPF 50 美国旗冲浪草帽",
     price: 29.9,
     image: "/assets/product-15.png",
     source:
       "https://lpphatshop.com/product/cheap-fishing-mat-for-men-and-women-wide-brimmed-straw-upf-50-large-sun-beach-boy-youth-100-blue-and-black-american-flag-lifeguard-surfing-straw-hat/",
     tags: ["lifeguard", "surf", "fishing", "UPF"],
-    description: "宽檐草帽，适合男士、女士和青少年，主打 UPF 50 防晒和蓝黑美国旗冲浪风格。"
+    description: "宽檐草帽，适合男女和青少年，主打 UPF 50 防晒和蓝黑美国旗冲浪风格。"
   },
   {
     id: 29188,
     slug: "mens-fishing-surfing-logo-straw-hat",
-    title: "男士救生员钓鱼冲浪海滩防晒草帽，可定制 Logo 贴章和帽底印花",
+    title: "男士钓鱼冲浪 Logo 草帽",
     price: 28.9,
     image: "/assets/product-16.png",
     source:
       "https://lpphatshop.com/product/custom-logo-patch-logo-bottom-print-mens-lifeguard-fishing-surfing-lifeguard-beach-sun-hat-sun-protection-fishing-straw-hat/",
     tags: ["custom", "lifeguard", "surf", "fishing"],
     description: "男士救生员海滩遮阳草帽，适合钓鱼和冲浪，可定制贴章和帽底 Logo 印花。"
+  }
+];
+
+export const products = baseProducts.map((product, index) => {
+  const neighbor = baseProducts[(index + 1) % baseProducts.length];
+  const secondNeighbor = baseProducts[(index + 2) % baseProducts.length];
+  return {
+    ...product,
+    rating: [4.9, 4.8, 5, 4.7][index % 4],
+    reviewCount: 18 + index * 7,
+    badges: index % 5 === 0 ? ["定制热卖", "批发推荐"] : index % 3 === 0 ? ["新品"] : ["现货"],
+    gallery: Array.from(new Set([product.image, neighbor.image, secondNeighbor.image]))
+  };
+});
+
+export const reviews = [
+  {
+    name: "海边冲浪俱乐部采购",
+    location: "厦门",
+    rating: 5,
+    text: "帽檐够宽，Logo 贴章效果很清楚。我们做活动周边，现场拍照特别出片。"
+  },
+  {
+    name: "度假村礼品店",
+    location: "三亚",
+    rating: 5,
+    text: "客人很喜欢这种自然草编质感，比普通遮阳帽更有度假感，补货沟通也顺。"
+  },
+  {
+    name: "户外团队负责人",
+    location: "杭州",
+    rating: 4.8,
+    text: "试戴一整天没有闷，帽绳很实用。批量采购前先看样，这个页面展示很直观。"
+  },
+  {
+    name: "花园市集摊主",
+    location: "成都",
+    rating: 5,
+    text: "宽檐防晒是真的舒服，浅色衣服也很好搭。后面准备做定制包装。"
+  }
+];
+
+export const faqs = [
+  {
+    question: "可以定制 Logo 吗？",
+    answer: "可以。常见方式包括贴章、刺绣、印花和帽底图案，适合品牌活动、冲浪店、度假村和团队采购。"
+  },
+  {
+    question: "价格为什么有些显示定制报价？",
+    answer: "定制款会受到数量、工艺、包装和运输方式影响，因此需要先提交需求再确认最终报价。"
+  },
+  {
+    question: "页面里的人民币价格实时吗？",
+    answer: "页面会优先请求实时美元兑人民币汇率；如果网络不可用，会用备用汇率继续展示，避免页面空白。"
+  },
+  {
+    question: "这个网站可以真实下单吗？",
+    answer: "当前是前端展示版本，购物车、收藏、对比和结账流程用于演示。后续可以接入真实支付、库存和账户系统。"
   }
 ];
 
