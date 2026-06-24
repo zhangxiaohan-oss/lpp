@@ -34,6 +34,312 @@ const languageOptions = [
   { code: "en", label: "English" }
 ];
 
+const translations = {
+  "首页": "Home",
+  "产品": "Products",
+  "全部产品": "All Products",
+  "海滩草帽": "Beach Straw Hats",
+  "救生员帽": "Lifeguard Hats",
+  "冲浪系列": "Surf Series",
+  "Logo 定制": "Logo Custom",
+  "新品上架": "New Arrival",
+  "最新草帽": "Latest Straw Hats",
+  "定制贴章款": "Custom Patch Styles",
+  "冲浪精选": "Surf Picks",
+  "热卖款": "Best sellers",
+  "高评分热卖": "Top Rated",
+  "批发采购款": "Bulk Order Picks",
+  "海滩人气款": "Beach Favorites",
+  "联系我们": "Contact us",
+  "品牌故事": "BRAND STORY",
+  "菜单": "Menu",
+  "首次购买享 9 折优惠，使用优惠码：LPPBEACH": "Enjoy 10% off your first order with code: LPPBEACH",
+  "定制咨询": "Custom Quote",
+  "天然草编帽": "Natural Straw Hats",
+  "戴上我们的草帽，保持清爽与有型": "Stay Cool and Sharp in Our Straw Hats",
+  "为海滩、冲浪、钓鱼、园艺和户外工作设计的宽檐草帽，兼顾防晒、透气和品牌展示。": "Wide-brim straw hats for beach, surf, fishing, gardening, and outdoor work, designed for shade, breathability, and brand display.",
+  "立即选购": "Shop Now",
+  "查看定制款": "View Custom Styles",
+  "批发与定制": "Wholesale & Custom",
+  "让你的 Logo 出现在夏天最显眼的位置": "Put Your Logo Where Summer Gets Seen",
+  "支持贴章、印花、帽底图案和团队采购，适合冲浪店、度假村、活动周边与户外团队。": "Supports patches, prints, under-brim artwork, and team purchasing for surf shops, resorts, events, and outdoor groups.",
+  "咨询定制": "Request Custom Quote",
+  "满 $30 免费配送": "Free Shipping Over $30",
+  "天然材料优先": "Natural Materials First",
+  "支持定制订单": "Custom Orders Ready",
+  "按场景选购": "Shop by Scenario",
+  "热门分类": "Popular Categories",
+  "海滩草帽精选": "Beach Straw Hat Picks",
+  "救生员帽精选": "Lifeguard Hat Picks",
+  "冲浪系列精选": "Surf Series Picks",
+  "Logo 定制精选": "Logo Custom Picks",
+  "查看全部": "View All",
+  "精选商品": "Featured Products",
+  "热卖草帽": "Best-selling Straw Hats",
+  "查看全部商品": "View All Products",
+  "真实反馈": "Real Feedback",
+  "卖家评价滚动展示": "Seller Reviews",
+  "常见问题": "FAQ",
+  "购买前先了解": "Know Before You Buy",
+  "展示与询价": "Showcase & Quote",
+  "准备好把草帽加入你的夏季货架了吗？": "Ready to Add Straw Hats to Your Summer Lineup?",
+  "订阅更新": "Subscribe",
+  "草帽品牌展示站": "Straw Hat Brand Showcase",
+  "商店": "Shop",
+  "收藏夹": "Wishlist",
+  "商品对比": "Compare",
+  "购物车": "Cart",
+  "结账演示": "Checkout Demo"
+};
+
+Object.assign(translations, {
+  "LPP 草帽店": "LPP Hat Shop",
+  "LPP 草帽店 Next.js 多页面电商展示站，支持人民币价格、收藏、对比、购物车和定制咨询演示。": "LPP Hat Shop is a multi-page Next.js ecommerce showcase with RMB pricing, wishlist, comparison, cart, and custom quote demos.",
+  "轻便透气，适合旅行、度假和日常防晒。": "Lightweight and breathable for travel, holidays, and everyday sun protection.",
+  "宽檐遮阳，户外工作和冲浪场景都稳。": "Wide-brim shade that works well for outdoor jobs and surf settings.",
+  "美式海岸气质，适合团队和活动采购。": "American coastal energy for teams, events, and bulk purchasing.",
+  "贴章、印花、帽绳和批量方案可沟通。": "Patches, prints, chin cords, and bulk options can all be customized.",
+  "常规商品支持快速发货，批量订单可单独确认运输方案。": "Standard items ship quickly; bulk orders can receive dedicated shipping plans.",
+  "草编纹理、宽檐结构和透气帽身，适合长时间户外佩戴。": "Woven texture, a wide brim, and a breathable crown make it comfortable outdoors for long hours.",
+  "Logo 贴章、颜色、帽绳、包装和数量需求都可以前端提交询价。": "Logo patches, colors, chin cords, packaging, and quantity requests can be submitted for a quote.",
+  "从海滩到户外工作，挑一顶能遮阳、能出片、也能定制 Logo 的草帽。": "From the beach to outdoor work, choose a straw hat that shades well, photographs beautifully, and supports custom logos.",
+  "面向海滩、冲浪、园艺、户外团队和品牌活动的草帽展示站，支持批发与 Logo 定制咨询。": "A straw hat showcase for beaches, surf, gardening, outdoor teams, and brand events, with wholesale and logo customization inquiries.",
+  "定制服务": "Custom Service",
+  "订单追踪": "Order Tracking",
+  "返回顶部": "Back to top",
+  "邮件联系": "Email us",
+  "在线咨询": "Online support",
+  "微信咨询": "WeChat",
+  "客服聊天": "Chat",
+  "回到顶部": "Back to top",
+  "微": "WX",
+  "聊": "Chat",
+  "查看详情": "View Details",
+  "草帽": "Straw Hat",
+  "询价定制": "Request Quote",
+  "加入购物车": "Add to Cart",
+  "收藏": "Wishlist",
+  "对比": "Compare",
+  "搜索": "Search",
+  "搜索商品、场景或定制方式": "Search products, scenarios, or customization options",
+  "筛选": "Filter",
+  "全部商品": "All Products",
+  "海滩帽": "Beach Hats",
+  "冲浪与海滩": "Surf & Beach",
+  "批发采购": "Wholesale",
+  "钓鱼户外": "Fishing & Outdoor",
+  "排序": "Sort",
+  "推荐排序": "Featured",
+  "评分优先": "Top Rated",
+  "价格从低到高": "Price: Low to High",
+  "价格从高到低": "Price: High to Low",
+  "名称 A-Z": "Name A-Z",
+  "没有找到符合条件的商品。": "No matching products found.",
+  "商品详情": "Product Details",
+  "数量": "Quantity",
+  "立即购买": "Buy Now",
+  "已收藏": "Saved",
+  "已加入对比": "Added to Compare",
+  "加入对比": "Add to Compare",
+  "商品信息": "Product Information",
+  "配送与退换": "Shipping & Returns",
+  "定制说明": "Customization Notes",
+  "常规现货支持快速发货；定制和批发订单将根据数量、工艺与目的地确认周期和运费。": "In-stock items ship quickly. Custom and wholesale orders will have timelines and shipping fees confirmed by quantity, process, and destination.",
+  "支持 Logo 贴章、帽底印花、帽绳、颜色和包装沟通。建议先提交数量和用途，便于确认报价。": "Logo patches, under-brim prints, chin cords, colors, and packaging can be customized. Share quantity and use case first so we can confirm pricing.",
+  "你可能也喜欢": "You May Also Like",
+  "相关商品": "Related Products",
+  "客户评价": "Customer Reviews",
+  "留下邮箱或直接前往定制页，告诉我们数量、Logo 方式和使用场景。": "Leave your email or go straight to the custom page and tell us your quantity, logo method, and use case.",
+  "邮箱": "Email",
+  "暂时还没有商品。": "No products yet.",
+  "返回商店": "Back to Shop",
+  "先挑一顶适合夏天的草帽。": "Pick a straw hat for summer first.",
+  "去结算": "Checkout",
+  "定制报价": "Custom Quote",
+  "美元原价": "Original USD price",
+  "按备用汇率换算": "Converted with fallback exchange rate",
+  "关于 LPP": "About LPP",
+  "为舒适户外而生的实用草帽": "Practical Straw Hats Made for Comfortable Outdoor Days",
+  "LPP 专注海滩、冲浪、园艺、钓鱼和户外工作场景。我们希望草帽不只是遮阳工具，也能成为团队、品牌和夏季活动的视觉符号。": "LPP focuses on beach, surf, gardening, fishing, and outdoor work scenarios. We want straw hats to be more than sun protection; they can also become a visual symbol for teams, brands, and summer events.",
+  "天然草编与真实编织质感": "Natural straw weaving with an authentic woven texture",
+  "宽檐造型，提升遮阳覆盖": "Wide-brim shape for better sun coverage",
+  "适合海滩、冲浪、钓鱼、园艺和户外工作": "Suitable for beaches, surf, fishing, gardening, and outdoor work",
+  "支持批发与 Logo 定制": "Supports wholesale orders and logo customization",
+  "购物车": "Cart",
+  "确认你的商品": "Review Your Items",
+  "这里是前端演示购物车，会保存你本次浏览器里加入的商品，适合展示购买流程。": "This is a front-end demo cart. It saves items added in this browser and is suitable for demonstrating the purchase flow.",
+  "结账": "Checkout",
+  "填写购买信息": "Enter Purchase Information",
+  "当前页面为静态购买流程演示，可作为后续真实支付、地址和库存系统的入口。": "This static checkout demo can later connect to real payment, address, and inventory systems.",
+  "尚未选择商品。你可以先去商店选择一款草帽。": "No product selected yet. You can choose a straw hat in the shop first.",
+  "姓名": "Name",
+  "请输入收货人姓名": "Enter recipient name",
+  "电话": "Phone",
+  "请输入联系电话": "Enter phone number",
+  "收货地址": "Shipping Address",
+  "请输入收货地址": "Enter shipping address",
+  "备注": "Notes",
+  "定制 Logo、尺码、数量或其他需求": "Custom logo, size, quantity, or other requirements",
+  "提交订单": "Submit Order",
+  "对比草帽款式": "Compare Straw Hat Styles",
+  "你加入对比的商品会显示在这里，方便比较价格、标签、场景和详情。": "Products added for comparison appear here so you can review prices, tags, use cases, and details.",
+  "告诉我们你的草帽需求": "Tell Us What You Need",
+  "无论是样品、批发、Logo 定制还是展示合作，都可以先用这个前端表单整理需求。": "Whether you need samples, wholesale, logo customization, or showcase collaboration, this front-end form helps organize your request.",
+  "先浏览商品": "Browse Products First",
+  "请输入姓名": "Enter your name",
+  "需求类型": "Request Type",
+  "批发 / Logo 定制 / 样品 / 其他": "Wholesale / Logo Custom / Sample / Other",
+  "需求说明": "Request Details",
+  "数量、交期、Logo 方式、目标场景等": "Quantity, lead time, logo method, target scenario, etc.",
+  "发送需求": "Send Request",
+  "把你的品牌放进夏天的场景里": "Put Your Brand Into Summer Scenes",
+  "适合冲浪店、度假村、户外团队、品牌活动和礼品采购。你可以提交数量、Logo 工艺、交期和包装需求，我们会按项目报价。": "Ideal for surf shops, resorts, outdoor teams, brand events, and gift sourcing. Submit quantity, logo process, lead time, and packaging needs, and we will quote by project.",
+  "贴章、刺绣、印花、帽底图案均可沟通": "Patches, embroidery, prints, and under-brim artwork are all available",
+  "支持不同帽绳、颜色、包装组合": "Supports different chin cords, colors, and packaging combinations",
+  "适合批发采购和活动周边展示": "Suitable for wholesale purchasing and event merchandise displays",
+  "提交定制需求": "Submit Custom Request",
+  "最新上架的草编帽、救生员帽和 Logo 定制款，适合海边活动、户外团队和夏季品牌周边展示。": "Newly listed straw hats, lifeguard hats, and logo-custom styles for beach events, outdoor teams, and summer brand merchandise.",
+  "新款推荐": "New Arrivals",
+  "优先展示近期主推款式，保持与首页海边草帽品牌风格一致。": "A focused selection of recently featured styles that matches the beach straw hat brand feel of the homepage.",
+  "从评分、评价数和批发适配度中筛出的热卖草帽，适合快速挑选展示和采购款。": "Best-selling straw hats selected by rating, review count, and wholesale suitability for quick demos and sourcing.",
+  "热卖精选": "Best-selling Picks",
+  "把更容易成交、展示感更强的款式放在这一页，便于临时演示给客户看。": "This page highlights styles with stronger sales appeal and clearer presentation value for quick customer demos.",
+  "为夏天、海风和团队标识而做的草帽品牌": "A Straw Hat Brand Built for Summer, Sea Breeze, and Team Identity",
+  "LPP 聚焦海滩、冲浪、园艺、户外工作和品牌活动场景，把宽檐遮阳、天然草编质感与 Logo": "LPP focuses on beaches, surf, gardening, outdoor work, and brand events, combining wide-brim sun protection, natural straw texture, and logo",
+  "定制能力放在同一个展示体验里。": "customization in one cohesive showcase experience.",
+  "这个站点用于展示商品、批发款式、定制方向和客户反馈。它不是冷冰冰的产品目录，而是让采购方快速理解“这顶帽子放到夏季活动里会是什么效果”。": "This site showcases products, wholesale styles, customization options, and customer feedback. It is not a cold product catalog; it helps buyers quickly understand how each hat will look in a summer event setting.",
+  "全部商品": "All Products",
+  "草帽商店": "Straw Hat Shop",
+  "浏览所有草帽、救生员帽、海滩帽和批发定制款式。可搜索关键词、按场景筛选并查看人民币价格。": "Browse all straw hats, lifeguard hats, beach hats, and wholesale custom styles. Search by keyword, filter by scenario, and view prices in your selected currency.",
+  "订单追踪": "Order Tracking",
+  "查询你的订单": "Track Your Order",
+  "输入订单编号和账单邮箱，即可查看购买后的订单状态。当前为前端演示表单，方便展示完整购物链路。": "Enter your order number and billing email to view order status. This is a front-end demo form for showing the full shopping flow.",
+  "订单编号": "Order Number",
+  "账单邮箱": "Billing Email",
+  "查询订单": "Track Order",
+  "收藏你喜欢的草帽": "Save Your Favorite Straw Hats",
+  "你在商品卡或详情页点过的收藏会显示在这里，方便临时展示选品流程。": "Items saved from product cards or detail pages appear here, making it easy to demonstrate the selection flow.",
+  "定制草帽": "Custom Straw Hat",
+  "夏季成人冲浪海滩草帽批发定制": "Wholesale Custom Adult Summer Surf Beach Straw Hat",
+  "美式救生员冲浪草帽": "American-style Lifeguard Surf Straw Hat",
+  "素色宽檐户外遮阳草帽": "Plain Wide-brim Outdoor Sun Straw Hat",
+  "自然草编 Logo 印花救生员帽": "Natural Straw Lifeguard Hat with Logo Print",
+  "宽檐钓鱼冲浪草帽": "Wide-brim Fishing and Surf Straw Hat",
+  "Logo 贴章救生员草帽": "Lifeguard Straw Hat with Logo Patch",
+  "男女通用海滩救生员草帽": "Unisex Beach Lifeguard Straw Hat",
+  "刺绣 Logo 救生员草帽": "Lifeguard Straw Hat with Embroidered Logo",
+  "巴拿马海滩风定制草帽": "Custom Panama-style Beach Straw Hat",
+  "高品质冲浪草帽批发定制": "High-quality Wholesale Custom Surf Straw Hat",
+  "时尚 Logo 海滩草帽": "Fashion Beach Straw Hat with Custom Logo",
+  "条纹美式冲浪草帽": "Striped American Surf Straw Hat",
+  "美式海滩草帽批发": "Wholesale American Beach Straw Hat",
+  "UPF 50 美国旗冲浪草帽": "UPF 50 American Flag Surf Straw Hat",
+  "男士钓鱼冲浪 Logo 草帽": "Men's Fishing and Surf Straw Hat with Logo",
+  "可选择颜色和尺码，并将订单需求提交给客服。批发价：50-200 件每件 $6.19，200-500 件每件 $4.50，500 件以上每件 $3.50，运费另行报价。": "Choose colors and sizes, then submit your order requirements to customer service. Wholesale pricing: $6.19 each for 50-200 pieces, $4.50 each for 200-500 pieces, and $3.50 each for 500+ pieces. Shipping is quoted separately.",
+  "适合批量采购的夏季草帽，支持 Logo 定制，自然镂空草编结构，男女通用。": "A summer straw hat for bulk purchasing, with logo customization, natural open-weave construction, and a unisex fit.",
+  "美式救生员草帽，主打夏季遮阳、防晒和冲浪文化，可支持 Logo 印花定制。": "An American-style lifeguard straw hat designed for summer shade, sun protection, and surf culture, with custom logo printing available.",
+  "素色宽檐遮阳帽，适合救生员、农场、园艺和日常户外防晒。": "A plain wide-brim sun hat for lifeguards, farms, gardening, and everyday outdoor sun protection.",
+  "自然草编救生员帽，采用美式宽檐造型，适合批发和 Logo 印花定制。": "A natural straw lifeguard hat with an American wide-brim shape, suitable for wholesale and custom logo printing.",
+  "宽檐编织草帽，适合海滩、救生员、冲浪、狩猎和钓鱼等户外使用。": "A wide-brim woven straw hat for beaches, lifeguards, surfing, hunting, fishing, and other outdoor uses.",
+  "自然草编救生员遮阳帽，支持定制 Logo 贴章，适合批发订单。": "A natural straw lifeguard sun hat with custom logo patch support, ideal for wholesale orders.",
+  "男女通用宽檐海滩帽，主打防晒、美式造型和定制 Logo 贴章印花。": "A unisex wide-brim beach hat focused on sun protection, American styling, and custom logo patch or print options.",
+  "救生员草帽款式，支持贴布刺绣 Logo，适合夏季品牌活动和团体使用。": "A lifeguard straw hat style with applique embroidered logo support, suitable for summer brand events and group use.",
+  "自然草编夏季遮阳帽，适合救生员、冲浪探险、巴拿马海滩造型和 Logo 定制。": "A natural straw summer sun hat for lifeguards, surf adventures, Panama-inspired beach looks, and logo customization.",
+  "支持定制印花的草帽，适合夏季冲浪、海滩和救生员场景，突出品牌 Logo 展示。": "A custom-print straw hat for summer surf, beach, and lifeguard scenarios, designed to highlight brand logos.",
+  "时尚男女通用海滩草帽，融合自然草编、冲浪和救生员风格。": "A stylish unisex beach straw hat blending natural straw texture with surf and lifeguard styling.",
+  "宽檐条纹美式草帽，适合海滩、冲浪、防晒、救生员和户外 Logo 定制。": "A wide-brim striped American straw hat for beaches, surfing, sun protection, lifeguards, and outdoor logo customization.",
+  "夏季救生员草帽批发款，采用美式海滩帽造型。": "A wholesale summer lifeguard straw hat with an American beach-hat silhouette.",
+  "宽檐草帽，适合男女和青少年，主打 UPF 50 防晒和蓝黑美国旗冲浪风格。": "A wide-brim straw hat for adults and youth, featuring UPF 50 sun protection and a blue-black American flag surf style.",
+  "男士救生员海滩遮阳草帽，适合钓鱼和冲浪，可定制贴章和帽底 Logo 印花。": "A men's lifeguard beach sun straw hat for fishing and surfing, with custom patches and under-brim logo printing available.",
+  "海边冲浪俱乐部采购": "Coastal Surf Club Buyer",
+  "度假村礼品店": "Resort Gift Shop",
+  "户外团队负责人": "Outdoor Team Lead",
+  "花园市集摊主": "Garden Market Vendor",
+  "厦门": "Xiamen",
+  "三亚": "Sanya",
+  "杭州": "Hangzhou",
+  "成都": "Chengdu",
+  "帽檐够宽，Logo 贴章效果很清楚。我们做活动周边，现场拍照特别出片。": "The brim is wide enough, and the logo patch looks crisp. We used them for event merchandise, and they photographed beautifully on site.",
+  "客人很喜欢这种自然草编质感，比普通遮阳帽更有度假感，补货沟通也顺。": "Guests love the natural woven texture. It feels more resort-ready than ordinary sun hats, and restocking was smooth.",
+  "试戴一整天没有闷，帽绳很实用。批量采购前先看样，这个页面展示很直观。": "I wore it all day without feeling stuffy, and the chin cord is practical. The page makes sample review before bulk purchasing very clear.",
+  "宽檐防晒是真的舒服，浅色衣服也很好搭。后面准备做定制包装。": "The wide brim is genuinely comfortable for sun protection, and it pairs well with light outfits. We plan to add custom packaging next.",
+  "可以定制 Logo 吗？": "Can I customize the logo?",
+  "可以。常见方式包括贴章、刺绣、印花和帽底图案，适合品牌活动、冲浪店、度假村和团队采购。": "Yes. Common options include patches, embroidery, printing, and under-brim artwork for brand events, surf shops, resorts, and team orders.",
+  "价格为什么有些显示定制报价？": "Why do some items show custom quote pricing?",
+  "定制款会受到数量、工艺、包装和运输方式影响，因此需要先提交需求再确认最终报价。": "Custom items depend on quantity, process, packaging, and shipping method, so requirements must be submitted before final pricing is confirmed.",
+  "页面里的人民币价格实时吗？": "Are the RMB prices on the page real-time?",
+  "页面会优先请求实时美元兑人民币汇率；如果网络不可用，会用备用汇率继续展示，避免页面空白。": "The page first requests a real-time USD-to-CNY exchange rate. If the network is unavailable, it uses a fallback rate so the page never appears blank.",
+  "这个网站可以真实下单吗？": "Can I place a real order on this website?",
+  "当前是前端展示版本，购物车、收藏、对比和结账流程用于演示。后续可以接入真实支付、库存和账户系统。": "This is currently a front-end showcase. Cart, wishlist, comparison, and checkout are for demonstration. Real payment, inventory, and account systems can be added later.",
+  "定制": "Custom",
+  "批发": "Wholesale",
+  "冲浪": "Surf",
+  "救生员": "Lifeguard",
+  "户外": "Outdoor",
+  "钓鱼": "Fishing",
+  "海滩": "Beach",
+  "UPF 防晒": "UPF Sun Protection"
+});
+
+const reverseTranslations = Object.fromEntries(Object.entries(translations).map(([zh, en]) => [en, zh]));
+
+function translateCopy(text, language) {
+  if (language === "en") return translations[text] || text;
+  return reverseTranslations[text] || text;
+}
+
+function preserveWhitespace(original, replacement) {
+  const leading = original.match(/^\s*/)?.[0] || "";
+  const trailing = original.match(/\s*$/)?.[0] || "";
+  return `${leading}${replacement}${trailing}`;
+}
+
+function applyDocumentLanguage(language) {
+  if (typeof document === "undefined") return;
+  const dictionary = language === "en" ? translations : reverseTranslations;
+  const titleKey = document.title.trim();
+  if (dictionary[titleKey]) {
+    document.title = dictionary[titleKey];
+  } else if (language === "en" && titleKey.includes("LPP 草帽店")) {
+    document.title = titleKey.replace("LPP 草帽店", "LPP Hat Shop");
+  } else if (language !== "en" && titleKey.includes("LPP Hat Shop")) {
+    document.title = titleKey.replace("LPP Hat Shop", "LPP 草帽店");
+  }
+
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const parent = node.parentElement;
+      if (!parent || ["SCRIPT", "STYLE", "NOSCRIPT", "SVG"].includes(parent.tagName)) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+
+  const textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+  textNodes.forEach((node) => {
+    const key = node.nodeValue.trim();
+    if (dictionary[key]) {
+      node.nodeValue = preserveWhitespace(node.nodeValue, dictionary[key]);
+    } else if (language === "en" && key.startsWith("数量：")) {
+      node.nodeValue = preserveWhitespace(node.nodeValue, key.replace("数量：", "Qty: "));
+    } else if (language !== "en" && key.startsWith("Qty: ")) {
+      node.nodeValue = preserveWhitespace(node.nodeValue, key.replace("Qty: ", "数量："));
+    } else if (language === "en" && key.endsWith("星评分")) {
+      node.nodeValue = preserveWhitespace(node.nodeValue, key.replace("星评分", "star rating"));
+    } else if (language !== "en" && key.endsWith("star rating")) {
+      node.nodeValue = preserveWhitespace(node.nodeValue, key.replace("star rating", "星评分"));
+    }
+  });
+
+  document.querySelectorAll("input[placeholder], textarea[placeholder]").forEach((field) => {
+    const next = dictionary[field.getAttribute("placeholder")];
+    if (next) field.setAttribute("placeholder", next);
+  });
+}
+
 function readJson(key, fallback) {
   if (typeof window === "undefined") return fallback;
   try {
@@ -97,6 +403,11 @@ export function Header() {
   }, []);
 
   useEffect(() => {
+    document.documentElement.lang = language === "en" ? "en" : "zh-CN";
+    window.requestAnimationFrame(() => applyDocumentLanguage(language));
+  }, [language]);
+
+  useEffect(() => {
     const syncPreferences = () => {
       setCurrency(window.localStorage.getItem(CURRENCY_KEY) === "USD" ? "USD" : "CNY");
       setLanguage(window.localStorage.getItem(LANGUAGE_KEY) === "en" ? "en" : "zh-CN");
@@ -151,7 +462,7 @@ export function Header() {
           aria-controls="site-nav"
           onClick={() => setNavOpen((current) => !current)}
         >
-          菜单
+          {translateCopy("菜单", language)}
         </button>
 
         <nav id="site-nav" className={`site-nav${navOpen ? " is-open" : ""}`} aria-label="主导航">
@@ -159,20 +470,20 @@ export function Header() {
             item.children ? (
               <div className="nav-menu-item" key={item.href}>
                 <a href={item.href}>
-                  {item.label}
+                  {translateCopy(item.label, language)}
                   <Icon name="chevron" />
                 </a>
                 <div className="nav-menu-panel">
                   {item.children.map((child) => (
                     <a href={child.href} key={child.href}>
-                      {child.label}
+                      {translateCopy(child.label, language)}
                     </a>
                   ))}
                 </div>
               </div>
             ) : (
               <a href={item.href} key={item.href}>
-                {item.label}
+                {translateCopy(item.label, language)}
               </a>
             )
           ))}
@@ -180,15 +491,15 @@ export function Header() {
 
         <div className="header-actions" aria-label="Shop utilities">
           <a className="header-cta" href="/customize">
-            定制咨询
+            {translateCopy("定制咨询", language)}
           </a>
           <form className="header-search-icon" onSubmit={submitSearch}>
             <input
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search hats"
-              aria-label="Search products"
+              placeholder={language === "en" ? "Search hats" : "搜索草帽"}
+              aria-label={language === "en" ? "Search products" : "搜索商品"}
             />
             <button type="submit" aria-label="Search">
               <Icon name="search" />
