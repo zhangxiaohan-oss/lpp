@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 
 const FALLBACK_USD_CNY = 6.79;
+const CURRENCY_KEY = "lpp_currency";
+const CURRENCY_EVENT = "lpp-currency-change";
 
 let cachedRateInfo = null;
 let rateInfoPromise = null;
@@ -42,7 +44,23 @@ function formatCny(value) {
   }).format(value);
 }
 
+function formatUsd(value) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
+function getSelectedCurrency() {
+  if (typeof window === "undefined") return "CNY";
+  const saved = window.localStorage.getItem(CURRENCY_KEY);
+  return saved === "USD" ? "USD" : "CNY";
+}
+
 export function Price({ price, priceLabel, compact = false }) {
+  const [currency, setCurrency] = useState("CNY");
   const [rateInfo, setRateInfo] = useState({
     rate: FALLBACK_USD_CNY,
     fallback: true,
@@ -67,12 +85,27 @@ export function Price({ price, priceLabel, compact = false }) {
     };
   }, []);
 
+  useEffect(() => {
+    const syncCurrency = () => setCurrency(getSelectedCurrency());
+
+    syncCurrency();
+    window.addEventListener(CURRENCY_EVENT, syncCurrency);
+    window.addEventListener("storage", syncCurrency);
+    return () => {
+      window.removeEventListener(CURRENCY_EVENT, syncCurrency);
+      window.removeEventListener("storage", syncCurrency);
+    };
+  }, []);
+
   if (price === null) {
     return <span>{priceLabel || "定制报价"}</span>;
   }
 
-  const converted = formatCny(price * rateInfo.rate);
-  const rateText = rateInfo.fallback
+  const converted = currency === "USD" ? formatUsd(price) : formatCny(price * rateInfo.rate);
+  const rateText =
+    currency === "USD"
+      ? "美元原价"
+      : rateInfo.fallback
     ? "按备用汇率换算"
     : `实时汇率 1 美元 = ${Number(rateInfo.rate).toFixed(4)} 元`;
 

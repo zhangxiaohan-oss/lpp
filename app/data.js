@@ -1,10 +1,36 @@
 export const navItems = [
   { label: "首页", href: "/" },
-  { label: "商店", href: "/shop" },
-  { label: "关于我们", href: "/about" },
-  { label: "定制服务", href: "/customize" },
-  { label: "订单追踪", href: "/tracking" },
-  { label: "联系我们", href: "/contact" }
+  {
+    label: "产品",
+    href: "/shop",
+    children: [
+      { label: "全部产品", href: "/shop" },
+      { label: "海滩草帽", href: "/shop?filter=beach" },
+      { label: "救生员帽", href: "/shop?filter=lifeguard" },
+      { label: "冲浪系列", href: "/shop?filter=surf" },
+      { label: "Logo 定制", href: "/shop?filter=custom" }
+    ]
+  },
+  {
+    label: "新品上架",
+    href: "/new-arrival",
+    children: [
+      { label: "最新草帽", href: "/new-arrival" },
+      { label: "定制贴章款", href: "/shop?filter=custom" },
+      { label: "冲浪精选", href: "/shop?filter=surf" }
+    ]
+  },
+  {
+    label: "热卖款",
+    href: "/best-sellers",
+    children: [
+      { label: "高评分热卖", href: "/best-sellers" },
+      { label: "批发采购款", href: "/shop?filter=wholesale" },
+      { label: "海滩人气款", href: "/shop?filter=beach" }
+    ]
+  },
+  { label: "联系我们", href: "/contact" },
+  { label: "品牌故事", href: "/brand-story" }
 ];
 
 export const categories = [

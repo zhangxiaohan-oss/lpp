@@ -19,6 +19,21 @@ const STORAGE_KEYS = {
   compare: "lpp_compare"
 };
 
+const CURRENCY_KEY = "lpp_currency";
+const CURRENCY_EVENT = "lpp-currency-change";
+const LANGUAGE_KEY = "lpp_language";
+const LANGUAGE_EVENT = "lpp-language-change";
+
+const currencyOptions = [
+  { code: "CNY", label: "CN(CNY)", flag: "cn" },
+  { code: "USD", label: "US(USD)", flag: "us" }
+];
+
+const languageOptions = [
+  { code: "zh-CN", label: "简体中文" },
+  { code: "en", label: "English" }
+];
+
 function readJson(key, fallback) {
   if (typeof window === "undefined") return fallback;
   try {
@@ -60,6 +75,8 @@ export function Header() {
   const [navOpen, setNavOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [counts, setCounts] = useState({ cart: 0, wishlist: 0, compare: 0 });
+  const [currency, setCurrency] = useState("CNY");
+  const [language, setLanguage] = useState("zh-CN");
 
   useEffect(() => {
     const syncCounts = () => {
@@ -79,11 +96,43 @@ export function Header() {
     };
   }, []);
 
+  useEffect(() => {
+    const syncPreferences = () => {
+      setCurrency(window.localStorage.getItem(CURRENCY_KEY) === "USD" ? "USD" : "CNY");
+      setLanguage(window.localStorage.getItem(LANGUAGE_KEY) === "en" ? "en" : "zh-CN");
+    };
+
+    syncPreferences();
+    window.addEventListener("storage", syncPreferences);
+    window.addEventListener(CURRENCY_EVENT, syncPreferences);
+    window.addEventListener(LANGUAGE_EVENT, syncPreferences);
+    return () => {
+      window.removeEventListener("storage", syncPreferences);
+      window.removeEventListener(CURRENCY_EVENT, syncPreferences);
+      window.removeEventListener(LANGUAGE_EVENT, syncPreferences);
+    };
+  }, []);
+
   function submitSearch(event) {
     event.preventDefault();
     const keyword = query.trim();
     window.location.href = keyword ? `/shop?keywords=${encodeURIComponent(keyword)}` : "/shop";
   }
+
+  function selectCurrency(code) {
+    window.localStorage.setItem(CURRENCY_KEY, code);
+    setCurrency(code);
+    window.dispatchEvent(new Event(CURRENCY_EVENT));
+  }
+
+  function selectLanguage(code) {
+    window.localStorage.setItem(LANGUAGE_KEY, code);
+    setLanguage(code);
+    window.dispatchEvent(new Event(LANGUAGE_EVENT));
+  }
+
+  const currentCurrency = currencyOptions.find((item) => item.code === currency) || currencyOptions[0];
+  const currentLanguage = languageOptions.find((item) => item.code === language) || languageOptions[0];
 
   return (
     <>
@@ -107,46 +156,145 @@ export function Header() {
 
         <nav id="site-nav" className={`site-nav${navOpen ? " is-open" : ""}`} aria-label="主导航">
           {navItems.map((item) => (
-            <a href={item.href} key={item.href}>
-              {item.label}
-            </a>
-          ))}
-          <div className="nav-dropdown">
-            <a href="/shop">产品分类</a>
-            <div className="nav-dropdown-panel">
-              {categories.map((category) => (
-                <a href={`/shop?filter=${category.filter}`} key={category.filter}>
-                  {category.label}
+            item.children ? (
+              <div className="nav-menu-item" key={item.href}>
+                <a href={item.href}>
+                  {item.label}
+                  <Icon name="chevron" />
                 </a>
+                <div className="nav-menu-panel">
+                  {item.children.map((child) => (
+                    <a href={child.href} key={child.href}>
+                      {child.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <a href={item.href} key={item.href}>
+                {item.label}
+              </a>
+            )
+          ))}
+        </nav>
+
+        <div className="header-actions" aria-label="Shop utilities">
+          <a className="header-cta" href="/customize">
+            定制咨询
+          </a>
+          <form className="header-search-icon" onSubmit={submitSearch}>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search hats"
+              aria-label="Search products"
+            />
+            <button type="submit" aria-label="Search">
+              <Icon name="search" />
+            </button>
+          </form>
+          <a className="utility-icon" href="/wishlist" aria-label={`Wishlist, ${counts.wishlist} items`}>
+            <Icon name="heart" />
+            {counts.wishlist ? <span>{counts.wishlist}</span> : null}
+          </a>
+          <a className="utility-icon" href="/cart" aria-label={`Cart, ${counts.cart} items`}>
+            <Icon name="cart" />
+            {counts.cart ? <span>{counts.cart}</span> : null}
+          </a>
+          <a className="utility-icon" href="/checkout" aria-label="Account">
+            <Icon name="user" />
+          </a>
+          <div className="preference-menu">
+            <button className="currency-switch" type="button" aria-label="Currency selector">
+              <span className={`flag-${currentCurrency.flag}`} aria-hidden="true"></span>
+              {currentCurrency.label}
+              <Icon name="chevron" />
+            </button>
+            <div className="preference-panel">
+              {currencyOptions.map((item) => (
+                <button type="button" key={item.code} onClick={() => selectCurrency(item.code)}>
+                  <span className={`flag-${item.flag}`} aria-hidden="true"></span>
+                  {item.label}
+                </button>
               ))}
             </div>
           </div>
-        </nav>
-
-        <form className="header-search" onSubmit={submitSearch}>
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="搜索草帽"
-            aria-label="搜索商品"
-          />
-          <button type="submit">搜索</button>
-        </form>
-
-        <div className="header-actions" aria-label="商店操作">
-          <a className="icon-button" href="/wishlist">
-            收藏 <span>{counts.wishlist}</span>
-          </a>
-          <a className="icon-button" href="/compare">
-            对比 <span>{counts.compare}</span>
-          </a>
-          <a className="cart-button" href="/cart">
-            购物车 <span>{counts.cart}</span>
-          </a>
+          <span className="header-divider" aria-hidden="true"></span>
+          <div className="preference-menu">
+            <button className="language-switch" type="button" aria-label="Language selector">
+              {currentLanguage.label}
+              <Icon name="chevron" />
+            </button>
+            <div className="preference-panel preference-panel-right">
+              {languageOptions.map((item) => (
+                <button type="button" key={item.code} onClick={() => selectLanguage(item.code)}>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </header>
+      <FloatingActions />
     </>
+  );
+}
+
+function Icon({ name }) {
+  const icons = {
+    search: (
+      <>
+        <circle cx="11" cy="11" r="6"></circle>
+        <path d="m16 16 4 4"></path>
+      </>
+    ),
+    heart: <path d="M20.8 5.9c-1.8-2.1-5-1.7-6.8.4-1.8-2.1-5-2.5-6.8-.4-2 2.3-1 5.8 1.3 7.9L14 19l5.5-5.2c2.3-2.1 3.3-5.6 1.3-7.9Z"></path>,
+    cart: (
+      <>
+        <path d="M6 7h15l-2 8H8L6 3H3"></path>
+        <circle cx="9" cy="20" r="1.5"></circle>
+        <circle cx="18" cy="20" r="1.5"></circle>
+      </>
+    ),
+    user: (
+      <>
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 21c1.6-4 4.1-6 8-6s6.4 2 8 6"></path>
+      </>
+    ),
+    chevron: <path d="m7 10 5 5 5-5"></path>
+  };
+
+  return (
+    <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+      {icons[name]}
+    </svg>
+  );
+}
+
+function FloatingActions() {
+  return (
+    <div className="floating-actions" aria-label="快捷联系">
+      <a href="#home" aria-label="返回顶部">
+        <span>−</span>
+      </a>
+      <a href="mailto:hello@lppbeach.com" aria-label="邮件联系">
+        <span>✉</span>
+      </a>
+      <a href="/contact" aria-label="在线咨询">
+        <span>☎</span>
+      </a>
+      <a href="/contact" aria-label="微信咨询">
+        <span>微</span>
+      </a>
+      <a href="/contact" aria-label="客服聊天">
+        <span>聊</span>
+      </a>
+      <a href="#home" aria-label="回到顶部">
+        <span>↑</span>
+      </a>
+    </div>
   );
 }
 
@@ -154,10 +302,19 @@ export function Footer() {
   return (
     <footer className="site-footer">
       <div>
-        <a className="brand footer-brand" href="/">
-          <img src="/assets/source-hero.png" alt="LPP 草帽店标志" />
+        <a className="footer-showcase-brand" href="/" aria-label="LPP 草帽品牌展示站">
+          <span>LPP</span>
+          <strong>草帽品牌展示站</strong>
         </a>
         <p>面向海滩、冲浪、园艺、户外团队和品牌活动的草帽展示站，支持批发与 Logo 定制咨询。</p>
+        <div className="footer-logo-wall" aria-label="示例品牌 Logo 展示">
+          <span>COAST CLUB</span>
+          <span>SURF LAB</span>
+          <span>PALM DAY</span>
+          <span>RGH</span>
+          <span>KONA</span>
+          <span>OUTDOOR CREW</span>
+        </div>
       </div>
       <div className="footer-links">
         <a href="/shop">商店</a>
@@ -244,19 +401,49 @@ export function ServicePromises() {
 }
 
 export function CategoryShowcase() {
+  const categoryProducts = {
+    beach: ["wholesale-custom-logo-surfing-beach-straw-hats", "unisex-beach-lifeguard-straw-hat", "custom-panama-beach-lifeguard-hat", "wholesale-american-beach-straw-hat", "fashion-custom-logo-beach-straw-hat", "plain-wide-brim-sun-hat"],
+    lifeguard: ["american-style-lifeguard-straw-hats", "natural-straw-lifeguard-logo-print-hat", "custom-logo-patch-lifeguard-straw-hat", "applique-embroidered-logo-lifeguard-hat", "wide-brim-summer-fishing-straw-hat", "upf50-american-flag-surfing-hat"],
+    surf: ["custom-printed-surfing-straw-hats", "striped-american-straw-hat", "upf50-american-flag-surfing-hat", "mens-fishing-surfing-logo-straw-hat", "american-style-lifeguard-straw-hats", "fashion-custom-logo-beach-straw-hat"],
+    custom: ["customize", "custom-logo-patch-lifeguard-straw-hat", "fashion-custom-logo-beach-straw-hat", "wholesale-custom-logo-surfing-beach-straw-hats", "custom-printed-surfing-straw-hats", "natural-straw-lifeguard-logo-print-hat"]
+  };
+
   return (
     <section className="category-section">
       <div className="section-heading">
         <p className="eyebrow">按场景选购</p>
         <h2>热门分类</h2>
       </div>
-      <div className="category-grid">
+      <div className="category-feature-list">
         {categories.map((category) => (
-          <a className="category-card" href={`/shop?filter=${category.filter}`} key={category.filter}>
-            <img src={category.image} alt={category.label} />
-            <span>{category.label}</span>
-            <p>{category.description}</p>
-          </a>
+          <article className="category-feature-row" key={category.filter}>
+            <a className="category-feature-hero" href={`/shop?filter=${category.filter}`}>
+              <img src={category.image} alt={category.label} />
+              <span>{category.filter}</span>
+              <h3>{category.label}</h3>
+              <p>{category.description}</p>
+            </a>
+            <div className="category-feature-products">
+              <div className="category-feature-heading">
+                <h3>{category.label}精选</h3>
+                <a href={`/shop?filter=${category.filter}`}>查看全部</a>
+              </div>
+              <div className="category-mini-grid">
+                {(categoryProducts[category.filter] || [])
+                  .map((slug) => products.find((product) => product.slug === slug))
+                  .filter(Boolean)
+                  .map((product) => (
+                    <a className="category-mini-card" href={productPath(product)} key={product.slug}>
+                      <img src={product.image} alt={product.title} />
+                      <strong>{product.title}</strong>
+                      <span className="mini-price">
+                        <Price price={product.price} priceLabel={product.priceLabel} />
+                      </span>
+                    </a>
+                  ))}
+              </div>
+            </div>
+          </article>
         ))}
       </div>
     </section>
