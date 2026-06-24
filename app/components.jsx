@@ -207,17 +207,19 @@ export function HeroSlider({ slides }) {
           </a>
         </div>
       </div>
-      <div className="hero-dots" aria-label="切换海报">
-        {slides.map((item, index) => (
-          <button
-            type="button"
-            key={item.title}
-            className={index === active ? "is-active" : ""}
-            aria-label={`切换到第 ${index + 1} 张海报`}
-            onClick={() => setActive(index)}
-          />
-        ))}
-      </div>
+      {slides.length > 1 ? (
+        <div className="hero-dots" aria-label="切换海报">
+          {slides.map((item, index) => (
+            <button
+              type="button"
+              key={item.title}
+              className={index === active ? "is-active" : ""}
+              aria-label={`切换到第 ${index + 1} 张海报`}
+              onClick={() => setActive(index)}
+            />
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -227,9 +229,14 @@ export function ServicePromises() {
     <section className="service-strip" aria-label="商店服务">
       {servicePromises.map((item, index) => (
         <article key={item.title}>
-          <span className="service-icon">{String(index + 1).padStart(2, "0")}</span>
-          <h2>{item.title}</h2>
-          <p>{item.description}</p>
+          <div className="service-index">
+            <span>{String(index + 1).padStart(2, "0")}</span>
+          </div>
+          <div>
+            <p>{item.kicker}</p>
+            <h2>{item.title}</h2>
+            <small>{item.description}</small>
+          </div>
         </article>
       ))}
     </section>

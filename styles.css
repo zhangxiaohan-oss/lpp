@@ -24,7 +24,7 @@ body {
   margin: 0;
   background: #ffffff;
   color: var(--text);
-  font-family: Inter, Arial, "Microsoft YaHei", sans-serif;
+  font-family: "SimHei", "Microsoft YaHei", "PingFang SC", "Heiti SC", Arial, sans-serif;
   font-size: 15px;
 }
 
@@ -266,6 +266,7 @@ button {
 .page-hero h1,
 .product-detail-copy h1 {
   margin: 0;
+  font-family: "SimHei", "Microsoft YaHei", "PingFang SC", "Heiti SC", Arial, sans-serif;
   font-size: clamp(34px, 5vw, 64px);
   line-height: 1.08;
   font-weight: 900;
@@ -373,29 +374,86 @@ button {
 }
 
 .service-strip {
+  position: relative;
+  z-index: 3;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-  background: var(--soft);
+  gap: 14px;
+  margin-top: -54px;
+  padding-top: 0;
+  padding-bottom: 0;
+  background: transparent;
 }
 
 .service-strip article {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 24px;
-  background: #ffffff;
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
+  min-height: 150px;
+  overflow: hidden;
+  border: 1px solid rgba(227, 231, 216, 0.92);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text);
+  padding: 26px;
+  box-shadow: 0 18px 42px rgba(31, 44, 25, 0.13);
+  backdrop-filter: blur(14px);
 }
 
-.service-icon {
-  display: inline-flex;
-  margin-bottom: 16px;
-  color: var(--green);
+.service-strip article::after {
+  content: "";
+  position: absolute;
+  right: -42px;
+  bottom: -62px;
+  width: 170px;
+  height: 170px;
+  border: 1px solid rgba(131, 183, 53, 0.16);
+  border-radius: 50%;
+  background: rgba(246, 248, 239, 0.75);
+}
+
+.service-index {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #ffffff;
+  font-size: 18px;
   font-weight: 900;
+  box-shadow: 0 12px 22px rgba(131, 183, 53, 0.35);
+}
+
+.service-strip article > div:last-child {
+  position: relative;
+  z-index: 1;
+}
+
+.service-strip article p {
+  margin: 0 0 8px;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .service-strip h2 {
-  margin: 0 0 8px;
-  font-size: 19px;
+  margin: 0 0 12px;
+  color: var(--text);
+  font-size: clamp(21px, 2vw, 28px);
+  line-height: 1.15;
+}
+
+.service-strip small {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
 }
 
 .service-strip p,
@@ -446,7 +504,9 @@ button {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.66));
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.02) 40%, rgba(0, 0, 0, 0.74) 100%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.58), transparent 42%);
 }
 
 .category-card img {
@@ -465,20 +525,28 @@ button {
 .category-card p {
   position: absolute;
   z-index: 1;
-  left: 22px;
-  right: 22px;
+  left: 20px;
+  right: 20px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
 }
 
 .category-card span {
-  bottom: 58px;
+  bottom: 74px;
   font-size: 24px;
   font-weight: 900;
+  line-height: 1.1;
 }
 
 .category-card p {
-  bottom: 16px;
+  bottom: 24px;
   margin: 0;
   color: rgba(255, 255, 255, 0.82);
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .shop-section {
@@ -625,8 +693,10 @@ button {
   margin: 0;
   overflow: hidden;
   color: #202124;
+  font-family: "SimHei", "Microsoft YaHei", "PingFang SC", "Heiti SC", Arial, sans-serif;
   font-size: 16px;
   line-height: 1.5;
+  font-weight: 900;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -704,9 +774,42 @@ button {
 }
 
 .testimonials {
+  position: relative;
   overflow: hidden;
-  background: var(--ink);
+  background:
+    linear-gradient(90deg, rgba(12, 17, 13, 0.94), rgba(12, 17, 13, 0.74) 48%, rgba(12, 17, 13, 0.92)),
+    url("/assets/source-banner.jpg") center / cover;
   color: #ffffff;
+}
+
+.testimonials::before {
+  content: "REVIEWS";
+  position: absolute;
+  top: 22px;
+  right: max(20px, calc((100vw - var(--container)) / 2));
+  color: rgba(255, 255, 255, 0.06);
+  font-size: clamp(64px, 11vw, 160px);
+  font-weight: 900;
+  line-height: 0.8;
+  pointer-events: none;
+}
+
+.testimonials::after {
+  content: "";
+  position: absolute;
+  left: -120px;
+  bottom: -180px;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(131, 183, 53, 0.38), transparent 68%);
+  pointer-events: none;
+}
+
+.testimonials .section-heading,
+.review-marquee {
+  position: relative;
+  z-index: 1;
 }
 
 .testimonials .section-heading h2 {
@@ -730,10 +833,22 @@ button {
 
 .review-card {
   width: min(380px, 78vw);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08));
+  padding: 26px;
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.review-card::before {
+  content: "“";
+  display: block;
+  height: 30px;
+  color: var(--green);
+  font-size: 58px;
+  font-weight: 900;
+  line-height: 0.7;
 }
 
 .review-card p {
@@ -1250,6 +1365,18 @@ button {
   .detail-service-grid,
   .shop-tools {
     grid-template-columns: 1fr;
+  }
+
+  .service-strip {
+    gap: 12px;
+    margin-top: -34px;
+  }
+
+  .service-strip article,
+  .service-strip article:first-child,
+  .service-strip article:last-child {
+    min-height: 150px;
+    border-radius: 10px;
   }
 
   .section-heading-row {

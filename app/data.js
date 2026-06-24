@@ -47,7 +47,7 @@ export const heroSlides = [
     eyebrow: "批发与定制",
     title: "让你的 Logo 出现在夏天最显眼的位置",
     description: "支持贴章、印花、帽底图案和团队采购，适合冲浪店、度假村、活动周边与户外团队。",
-    image: "/assets/category-04.jpg",
+    image: "/assets/source-banner-custom-generated.png",
     cta: "咨询定制",
     href: "/customize"
   }
@@ -55,14 +55,17 @@ export const heroSlides = [
 
 export const servicePromises = [
   {
+    kicker: "Fast shipping",
     title: "满 $30 免费配送",
     description: "常规商品支持快速发货，批量订单可单独确认运输方案。"
   },
   {
+    kicker: "Natural weave",
     title: "天然材料优先",
     description: "草编纹理、宽檐结构和透气帽身，适合长时间户外佩戴。"
   },
   {
+    kicker: "Custom ready",
     title: "支持定制订单",
     description: "Logo 贴章、颜色、帽绳、包装和数量需求都可以前端提交询价。"
   }
