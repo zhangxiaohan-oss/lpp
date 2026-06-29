@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Price } from "./currency";
@@ -19,6 +19,7 @@ const STORAGE_KEYS = {
   compare: "lpp_compare"
 };
 
+const ADMIN_PRODUCTS_KEY = "lpp_admin_products";
 const CURRENCY_KEY = "lpp_currency";
 const CURRENCY_EVENT = "lpp-currency-change";
 const LANGUAGE_KEY = "lpp_language";
@@ -376,6 +377,49 @@ function toggleListItem(key, slug) {
   writeJson(key, next);
   return next.includes(slug);
 }
+function getClientProducts({ includeInactive = false } = {}) {
+  const managedProducts = readJson(ADMIN_PRODUCTS_KEY, null);
+  const source = Array.isArray(managedProducts) && managedProducts.length ? managedProducts : products;
+
+  return source
+    .filter((product) => includeInactive || (product.status || "active") === "active")
+    .map((product, index) => {
+      const image = product.image || "/assets/product-01.jpg";
+      const tags = Array.isArray(product.tags)
+        ? product.tags
+        : String(product.tags || "")
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean);
+
+      return {
+        ...product,
+        id: product.id || `admin-${index + 1}`,
+        slug: product.slug || `admin-product-${index + 1}`,
+        title: product.title || "未命名商品",
+        price: product.price === "" || product.price === null || product.price === undefined ? null : Number(product.price),
+        image,
+        tags,
+        description: product.description || "后台上架商品，后续可接入真实商品详情。",
+        rating: product.rating || 5,
+        reviewCount: product.reviewCount || 0,
+        badges: product.badges || ["后台上架"],
+        gallery: Array.isArray(product.gallery) && product.gallery.length ? product.gallery : [image],
+        adminManaged: Boolean(product.adminManaged)
+      };
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
 
 export function Header() {
   const [navOpen, setNavOpen] = useState(false);
@@ -765,13 +809,24 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
   const [search, setSearch] = useState(initialSearch);
   const [filter, setFilter] = useState(initialFilter);
   const [sort, setSort] = useState("featured");
+  const [catalog, setCatalog] = useState(products);
 
   useEffect(() => setSearch(initialSearch), [initialSearch]);
   useEffect(() => setFilter(initialFilter), [initialFilter]);
+  useEffect(() => {
+    const syncCatalog = () => setCatalog(getClientProducts());
+    syncCatalog();
+    window.addEventListener("lpp-admin-products-change", syncCatalog);
+    window.addEventListener("storage", syncCatalog);
+    return () => {
+      window.removeEventListener("lpp-admin-products-change", syncCatalog);
+      window.removeEventListener("storage", syncCatalog);
+    };
+  }, []);
 
   const visibleProducts = useMemo(() => {
     const searchText = search.trim().toLowerCase();
-    const items = products.filter((product) => {
+    const items = catalog.filter((product) => {
       const haystack = [product.title, product.description, product.tags.join(" ")].join(" ").toLowerCase();
       const tags = product.tags.map((tag) => tag.toLowerCase());
       return (!searchText || haystack.includes(searchText)) && (filter === "all" || tags.includes(filter));
@@ -789,7 +844,7 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
               : items;
 
     return typeof limit === "number" ? sorted.slice(0, limit) : sorted;
-  }, [filter, limit, search, sort]);
+  }, [catalog, filter, limit, search, sort]);
 
   return (
     <>
@@ -843,6 +898,7 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
 export function ProductCard({ product }) {
   const [wished, setWished] = useState(false);
   const [compared, setCompared] = useState(false);
+  const detailHref = product.adminManaged ? `/shop?keywords=${encodeURIComponent(product.title)}` : productPath(product);
 
   useEffect(() => {
     setWished(readJson(STORAGE_KEYS.wishlist, []).includes(product.slug));
@@ -855,7 +911,7 @@ export function ProductCard({ product }) {
 
   return (
     <article className="product-card">
-      <a className="product-media" href={productPath(product)} aria-label={`查看${product.title}`}>
+      <a className="product-media" href={detailHref} aria-label={`查看${product.title}`}>
         <img src={product.image} alt={`${product.title} 商品图`} />
         <span className="quick-view">查看详情</span>
       </a>
@@ -1097,23 +1153,26 @@ export function StorageCollectionView({ type, initialProductSlug, initialQuantit
     }
 
     const sync = () => {
+      const catalog = getClientProducts({ includeInactive: true });
       if (type === "cart") {
         const cart = readJson(key, {});
         setItems(
           Object.values(cart)
-            .map((entry) => ({ product: products.find((item) => item.slug === entry.slug), qty: entry.qty }))
+            .map((entry) => ({ product: catalog.find((item) => item.slug === entry.slug), qty: entry.qty }))
             .filter((entry) => entry.product)
         );
       } else {
         const slugs = readJson(key, []);
-        setItems(slugs.map((slug) => products.find((item) => item.slug === slug)).filter(Boolean));
+        setItems(slugs.map((slug) => catalog.find((item) => item.slug === slug)).filter(Boolean));
       }
     };
 
     sync();
+    window.addEventListener("lpp-admin-products-change", sync);
     window.addEventListener("lpp-store-change", sync);
     window.addEventListener("storage", sync);
     return () => {
+      window.removeEventListener("lpp-admin-products-change", sync);
       window.removeEventListener("lpp-store-change", sync);
       window.removeEventListener("storage", sync);
     };
