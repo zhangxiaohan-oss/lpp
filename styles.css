@@ -414,7 +414,7 @@ button {
 }
 
 .flag-cn::before {
-  content: "鈽?;
+  content: "\2605";
   position: absolute;
   left: 5px;
   top: 1px;
@@ -1256,7 +1256,7 @@ button {
 }
 
 .review-card::before {
-  content: "鈥?;
+  content: "\201C";
   display: block;
   height: 30px;
   color: var(--green);
