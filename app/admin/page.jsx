@@ -34,6 +34,7 @@ const blankProduct = {
   stock: 100,
   category: "草帽",
   image: "/assets/product-01.jpg",
+  gallery: ["/assets/product-01.jpg"],
   tags: "custom, wholesale",
   status: "draft",
   description: "",
@@ -66,6 +67,16 @@ function readJson(key, fallback) {
 function writeJson(key, value, eventName) {
   window.localStorage.setItem(key, JSON.stringify(value));
   if (eventName) window.dispatchEvent(new Event(eventName));
+}
+
+function readImageFiles(files) {
+  const imageFiles = Array.from(files || []).filter((file) => file.type.startsWith("image/"));
+  return Promise.all(imageFiles.map((file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve({ src: reader.result, name: file.name });
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  })));
 }
 
 function mergePermissions(user) {
@@ -110,7 +121,7 @@ function seedUsers() {
       permissions: rolePresets.super.permissions
     },
     {
-      name: "普通管理员",
+      id: "user-manager",
       name: "普通管理员",
       username: "manager",
       password: "lpp-demo",
@@ -123,20 +134,23 @@ function seedUsers() {
 }
 
 function normalizeProduct(product, index) {
-  const slug = product.slug || product.title.toLowerCase().trim().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-").replace(/^-|-$/g, "") || `admin-product-${Date.now()}`;
-  const image = product.image || "/assets/product-01.jpg";
+  const title = product.title || `商品 ${index + 1}`;
+  const slug = product.slug || title.toLowerCase().trim().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-").replace(/^-|-$/g, "") || `admin-product-${Date.now()}`;
+  const tags = Array.isArray(product.tags) ? product.tags : String(product.tags || "").split(",").map((tag) => tag.trim()).filter(Boolean);
+  const image = product.image || (Array.isArray(product.gallery) && product.gallery[0]) || "/assets/product-01.jpg";
   return {
     ...product,
     id: product.id || `admin-${Date.now()}-${index}`,
+    title,
     slug,
     sku: product.sku || `LPP-${String(index + 1).padStart(4, "0")}`,
     price: product.price === "" || product.price === null || product.price === undefined ? null : Number(product.price),
     stock: Number(product.stock ?? 0),
     image,
     gallery: Array.isArray(product.gallery) && product.gallery.length ? product.gallery : [image],
-    category: product.tags?.includes("lifeguard") ? "救生员帽" : product.tags?.includes("surf") ? "冲浪系列" : "草帽",
+    tags,
     status: product.status || "active",
-    category: product.category || "草帽",
+    category: product.category || (tags.includes("lifeguard") ? "救生员帽" : tags.includes("surf") ? "冲浪系列" : "草帽"),
     rating: product.rating || 5,
     reviewCount: product.reviewCount || 0,
     adminManaged: product.adminManaged ?? true
@@ -221,7 +235,7 @@ export default function AdminPage() {
     if (!savedUsers.length) writeJson(USER_KEY, initialUsers, "lpp-admin-users-change");
 
     const savedProducts = readJson(PRODUCT_KEY, []);
-    const initialProducts = savedProducts.length ? savedProducts : seedProducts();
+    const initialProducts = savedProducts.length ? savedProducts.map((product, index) => normalizeProduct(product, index)) : seedProducts();
     setItems(initialProducts);
     if (!savedProducts.length) writeJson(PRODUCT_KEY, initialProducts, "lpp-admin-products-change");
 
@@ -251,7 +265,7 @@ export default function AdminPage() {
   const visibleProducts = useMemo(() => {
     const text = query.trim().toLowerCase();
     if (!text) return items;
-  const currentRoleLabel = currentUser ? roleLabel(currentUser.role) : "未登录";
+    return items.filter((item) => [item.title, item.sku, item.category, item.status, item.tags?.join(" ")].join(" ").toLowerCase().includes(text));
   }, [items, query]);
 
   function saveProducts(nextItems) {
@@ -318,6 +332,36 @@ export default function AdminPage() {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function updateProductImageUrl(value) {
+    setForm((current) => ({
+      ...current,
+      image: value,
+      gallery: value ? [value] : []
+    }));
+  }
+
+  async function chooseProductImages(event) {
+    const picked = await readImageFiles(event.target.files);
+    if (!picked.length) return;
+    const gallery = picked.map((file) => file.src);
+    setForm((current) => ({
+      ...current,
+      image: gallery[0],
+      gallery,
+      imageNames: picked.map((file) => file.name)
+    }));
+    event.target.value = "";
+  }
+
+  function removeProductImage(index) {
+    setForm((current) => {
+      const gallery = (current.gallery || [current.image]).filter(Boolean).filter((_, currentIndex) => currentIndex !== index);
+      const imageNames = (current.imageNames || []).filter((_, currentIndex) => currentIndex !== index);
+      const image = gallery[0] || "/assets/product-01.jpg";
+      return { ...current, image, gallery: gallery.length ? gallery : [image], imageNames };
+    });
+  }
+
   function resetForm() {
     setEditingId("");
     setForm(blankProduct);
@@ -337,7 +381,11 @@ export default function AdminPage() {
   function editProduct(product) {
     if (!power.products) return;
     setEditingId(product.id);
-    setForm({ ...product, tags: Array.isArray(product.tags) ? product.tags.join(", ") : product.tags || "" });
+    setForm({
+      ...product,
+      gallery: Array.isArray(product.gallery) && product.gallery.length ? product.gallery : [product.image],
+      tags: Array.isArray(product.tags) ? product.tags.join(", ") : product.tags || ""
+    });
     setTab("products");
   }
 
@@ -487,12 +535,31 @@ export default function AdminPage() {
               <label>库存<input type="number" value={form.stock} onChange={(event) => updateForm("stock", event.target.value)} /></label>
               <label>分类<input value={form.category} onChange={(event) => updateForm("category", event.target.value)} /></label>
               <label>SKU<input value={form.sku} onChange={(event) => updateForm("sku", event.target.value)} /></label>
-              <label>图片路径<input value={form.image} onChange={(event) => updateForm("image", event.target.value)} /></label>
+              <label>图片 URL<input value={form.image?.startsWith("data:") ? "" : form.image} onChange={(event) => updateProductImageUrl(event.target.value)} placeholder="可手动填写 URL，或用下方按钮选择本地图片" /></label>
               <label>标签<input value={form.tags} onChange={(event) => updateForm("tags", event.target.value)} /></label>
               <label>成本<input type="number" step="0.01" value={form.cost ?? ""} onChange={(event) => updateForm("cost", event.target.value)} /></label>
               <label>重量<input value={form.weight ?? ""} onChange={(event) => updateForm("weight", event.target.value)} placeholder="例如 0.35kg" /></label>
               <label>状态<select value={form.status} onChange={(event) => updateForm("status", event.target.value)}><option value="draft">草稿</option><option value="active">上架</option><option value="inactive">下架</option></select></label>
               <label>SEO 标题<input value={form.seoTitle ?? ""} onChange={(event) => updateForm("seoTitle", event.target.value)} /></label>
+            </div>
+            <div className="admin-image-picker">
+              <div>
+                <strong>商品图片</strong>
+                <span>支持从本地目录多选图片，第一张自动作为主图</span>
+              </div>
+              <label className="admin-file-button">
+                选择本地图片
+                <input type="file" accept="image/*" multiple onChange={chooseProductImages} />
+              </label>
+              <div className="admin-image-preview">
+                {(form.gallery?.length ? form.gallery : [form.image]).filter(Boolean).map((image, index) => (
+                  <figure key={`${image}-${index}`}>
+                    <img src={image} alt="" />
+                    <figcaption>{index === 0 ? "主图" : `图 ${index + 1}`}</figcaption>
+                    <button type="button" onClick={() => removeProductImage(index)}>移除</button>
+                  </figure>
+                ))}
+              </div>
             </div>
             <label className="admin-wide-label">描述<textarea value={form.description} onChange={(event) => updateForm("description", event.target.value)} /></label>
             <label className="admin-wide-label">SEO 描述<textarea value={form.seoDescription ?? ""} onChange={(event) => updateForm("seoDescription", event.target.value)} /></label>
