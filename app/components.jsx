@@ -24,6 +24,9 @@ const CURRENCY_KEY = "lpp_currency";
 const CURRENCY_EVENT = "lpp-currency-change";
 const LANGUAGE_KEY = "lpp_language";
 const LANGUAGE_EVENT = "lpp-language-change";
+const SOCIAL_BINDINGS_KEY = "lpp_social_bindings";
+const CHAT_HISTORY_KEY = "lpp_support_chat_history";
+const ACCOUNT_SESSION_KEY = "oufan_account_session";
 
 const currencyOptions = [
   { code: "CNY", label: "CN(CNY)", flag: "cn" },
@@ -427,6 +430,9 @@ export function Header() {
   const [counts, setCounts] = useState({ cart: 0, wishlist: 0, compare: 0 });
   const [currency, setCurrency] = useState("CNY");
   const [language, setLanguage] = useState("zh-CN");
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
+  const [supportChannel, setSupportChannel] = useState("whatsapp");
 
   useEffect(() => {
     const syncCounts = () => {
@@ -496,7 +502,7 @@ export function Header() {
       </div>
       <header className="site-header">
         <a className="brand" href="/" aria-label="LPP 首页">
-          <img src="/assets/source-hero.png" alt="LPP 草帽店标志" />
+          <img src="/assets/oufan-logo.jpg" alt="Oufan 草帽品牌标志" />
         </a>
 
         <button
@@ -557,9 +563,14 @@ export function Header() {
             <Icon name="cart" />
             {counts.cart ? <span>{counts.cart}</span> : null}
           </a>
-          <a className="utility-icon" href="/checkout" aria-label="Account">
+          <button
+            className="utility-icon"
+            type="button"
+            aria-label={language === "en" ? "Account center" : "个人中心"}
+            onClick={() => setAccountOpen(true)}
+          >
             <Icon name="user" />
-          </a>
+          </button>
           <div className="preference-menu">
             <button className="currency-switch" type="button" aria-label="Currency selector">
               <span className={`flag-${currentCurrency.flag}`} aria-hidden="true"></span>
@@ -591,7 +602,19 @@ export function Header() {
           </div>
         </div>
       </header>
-      <FloatingActions />
+      <FloatingActions
+        onOpenSupport={(channel) => {
+          setSupportChannel(channel);
+          setSupportOpen(true);
+        }}
+      />
+      <AccountPanel open={accountOpen} onClose={() => setAccountOpen(false)} language={language} />
+      <SupportChatPanel
+        open={supportOpen}
+        initialChannel={supportChannel}
+        onClose={() => setSupportOpen(false)}
+        language={language}
+      />
     </>
   );
 }
@@ -618,37 +641,324 @@ function Icon({ name }) {
         <path d="M4 21c1.6-4 4.1-6 8-6s6.4 2 8 6"></path>
       </>
     ),
-    chevron: <path d="m7 10 5 5 5-5"></path>
+    chevron: <path d="m7 10 5 5 5-5"></path>,
+    minus: <path d="M6 12h12"></path>,
+    mail: (
+      <>
+        <rect x="4" y="6" width="16" height="12" rx="2"></rect>
+        <path d="m5 8 7 5 7-5"></path>
+      </>
+    ),
+    arrowUp: (
+      <>
+        <path d="M12 19V5"></path>
+        <path d="m6 11 6-6 6 6"></path>
+      </>
+    ),
+    whatsapp: (
+      <>
+        <path d="M6.7 18.5 4 20l.8-3.1A8 8 0 1 1 12 20a8.3 8.3 0 0 1-5.3-1.5Z"></path>
+        <path d="M9.4 8.6c-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.4-1.1 1.1-1.1 2.6s1.1 3 1.3 3.2c.2.3 2.1 3.3 5.2 4.4 2.6.9 3.1.7 3.7.7.6-.1 1.8-.7 2.1-1.4.3-.7.3-1.3.2-1.4-.1-.2-.3-.3-.7-.5l-2-1c-.4-.1-.6-.1-.8.2l-.8 1c-.2.2-.4.3-.8.1-.4-.2-1.5-.6-2.8-1.7-1-1-1.7-2.1-1.9-2.5-.2-.3 0-.5.2-.7l.5-.6c.2-.2.2-.3.4-.6.1-.2.1-.4 0-.6l-.9-2.1Z"></path>
+      </>
+    ),
+    messenger: (
+      <>
+        <path d="M12 4C7 4 3.2 7.5 3.2 12.1c0 2.6 1.2 4.9 3.2 6.3V21l2.9-1.6c.8.2 1.7.3 2.7.3 5 0 8.8-3.5 8.8-8.1C20.8 7.5 17 4 12 4Z"></path>
+        <path d="m7.2 14.4 3-3.2 2.4 2.2 4.2-4.4-3.2 5.6-2.5-2.2-3.9 2Z"></path>
+      </>
+    ),
+    facebook: <path d="M14.2 8.1h2.2V4.4c-.4-.1-1.8-.2-3.3-.2-3.3 0-5.5 2-5.5 5.8v3.2H4v4.1h3.6V24H12v-6.7h3.5l.6-4.1H12v-2.8c0-1.2.3-2.3 2.2-2.3Z"></path>
   };
 
   return (
-    <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <svg className={`icon icon-${name}`} viewBox="0 0 24 24" aria-hidden="true">
       {icons[name]}
     </svg>
   );
 }
 
-function FloatingActions() {
+function FloatingActions({ onOpenSupport }) {
   return (
     <div className="floating-actions" aria-label="快捷联系">
-      <a href="#home" aria-label="返回顶部">
-        <span>−</span>
+      <a className="floating-action-neutral" href="#home" aria-label="收起快捷联系">
+        <Icon name="minus" />
       </a>
-      <a href="mailto:hello@lppbeach.com" aria-label="邮件联系">
-        <span>✉</span>
+      <button className="floating-action-whatsapp" type="button" aria-label="WhatsApp 客服演示" onClick={() => onOpenSupport("whatsapp")}>
+        <Icon name="whatsapp" />
+      </button>
+      <button className="floating-action-messenger" type="button" aria-label="Messenger 客服演示" onClick={() => onOpenSupport("messenger")}>
+        <Icon name="messenger" />
+      </button>
+      <button className="floating-action-facebook" type="button" aria-label="Facebook 登录绑定" onClick={() => onOpenSupport("facebook")}>
+        <Icon name="facebook" />
+      </button>
+      <a className="floating-action-mail" href="mailto:hello@lppbeach.com" aria-label="邮件联系">
+        <Icon name="mail" />
       </a>
-      <a href="/contact" aria-label="在线咨询">
-        <span>☎</span>
+      <a className="floating-action-neutral" href="#home" aria-label="回到顶部">
+        <Icon name="arrowUp" />
       </a>
-      <a href="/contact" aria-label="微信咨询">
-        <span>微</span>
-      </a>
-      <a href="/contact" aria-label="客服聊天">
-        <span>聊</span>
-      </a>
-      <a href="#home" aria-label="回到顶部">
-        <span>↑</span>
-      </a>
+    </div>
+  );
+}
+
+function readAccountSession() {
+  try {
+    return JSON.parse(window.localStorage.getItem(ACCOUNT_SESSION_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
+const authProviders = [
+  { key: "gmail", name: "Gmail", badge: "G", className: "provider-gmail", authPath: "/api/auth/google", configLabel: "GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET" },
+  { key: "whatsapp", name: "WhatsApp", badge: "WA", className: "provider-whatsapp", authPath: "/api/auth/whatsapp", configLabel: "WHATSAPP_BUSINESS_PHONE_NUMBER_ID / WHATSAPP_ACCESS_TOKEN" },
+  { key: "facebook", name: "Facebook", badge: "FB", className: "provider-facebook", authPath: "/api/auth/facebook", configLabel: "META_APP_ID / META_APP_SECRET" },
+  { key: "messenger", name: "Messenger", badge: "MS", className: "provider-messenger", authPath: "/api/auth/messenger", configLabel: "FACEBOOK_PAGE_ID / MESSENGER_PAGE_ACCESS_TOKEN" }
+];
+
+const providerCopy = {
+  gmail: { zh: "使用 Gmail / Google 账号验证并注册。", en: "Verify and register with a Gmail / Google account." },
+  whatsapp: { zh: "通过 WhatsApp 手机号验证码完成注册绑定。", en: "Register and bind by verifying a WhatsApp phone number." },
+  facebook: { zh: "通过 Facebook Login 完成身份授权。", en: "Authorize identity through Facebook Login." },
+  messenger: { zh: "通过 Messenger / Facebook Page 对话身份完成客服绑定。", en: "Bind support identity through Messenger / Facebook Page conversation." }
+};
+
+function AccountPanel({ open, onClose, language }) {
+  const [session, setSession] = useState(null);
+  const [mode, setMode] = useState("login");
+  const [notice, setNotice] = useState("");
+  const isEnglish = language === "en";
+  const text = (zh, en) => (isEnglish ? en : zh);
+
+  useEffect(() => {
+    if (!open) return;
+    setSession(readAccountSession());
+    fetch("/api/account/session")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.session) {
+          setSession(data.session);
+          window.localStorage.setItem(ACCOUNT_SESSION_KEY, JSON.stringify(data.session));
+        }
+      })
+      .catch(() => {});
+    setNotice("");
+  }, [open]);
+
+  function startProviderAuth(provider) {
+    setNotice(text("正在进入 " + provider.name + " 授权入口...", "Opening " + provider.name + " authorization..."));
+    window.location.href = provider.authPath;
+  }
+
+  function logout() {
+    fetch("/api/account/logout", { method: "POST" }).catch(() => {});
+    window.localStorage.removeItem(ACCOUNT_SESSION_KEY);
+    setSession(null);
+  }
+
+  if (!open) return null;
+  const boundProviders = session?.boundProviders || [];
+
+  return (
+    <div className="support-overlay" role="dialog" aria-modal="true" aria-labelledby="account-panel-title">
+      <div className="support-panel account-panel">
+        <button className="support-close" type="button" onClick={onClose} aria-label={text("关闭个人中心", "Close account center")}>×</button>
+        <div className="support-intro account-intro">
+          <p className="eyebrow">{text("个人中心", "Account Center")}</p>
+          <h2 id="account-panel-title">{session ? text("我的账户", "My Account") : text("登录或注册 Oufan 账户", "Log In or Create an Oufan Account")}</h2>
+          <p>{text("这里用于管理个人信息、钱包、第三方绑定和用户协议。", "Manage profile, wallet, third-party bindings, and user agreements here.")}</p>
+        </div>
+
+        {session ? (
+          <div className="account-dashboard">
+            <section className="account-card account-profile-card">
+              <div className="account-avatar">{session.name?.slice(0, 1) || "U"}</div>
+              <div>
+                <p className="eyebrow">{text("个人信息", "Profile")}</p>
+                <h3>{session.name || text("Oufan 用户", "Oufan User")}</h3>
+                <p>{session.email || text("尚未绑定邮箱", "No email bound yet")}</p>
+                <small>{text("会员编号", "Member ID")}: {session.id || "OUFAN-USER"}</small>
+              </div>
+            </section>
+            <section className="account-card">
+              <p className="eyebrow">{text("钱包", "Wallet")}</p>
+              <h3>¥{session.walletBalance || "0.00"}</h3>
+              <p>{text("优惠券、积分、退款余额和批发账期会显示在这里。", "Coupons, points, refund balance, and wholesale credit terms appear here.")}</p>
+            </section>
+            <section className="account-card">
+              <p className="eyebrow">{text("已绑定方式", "Bound Methods")}</p>
+              <div className="account-provider-list">
+                {authProviders.map((provider) => <span className={boundProviders.includes(provider.key) ? "is-bound" : ""} key={provider.key}>{provider.name}</span>)}
+              </div>
+            </section>
+            <section className="account-card account-agreement-card">
+              <p className="eyebrow">{text("用户协议", "Agreements")}</p>
+              <a href="/contact">{text("用户服务协议", "Terms of Service")}</a>
+              <a href="/contact">{text("隐私政策", "Privacy Policy")}</a>
+              <a href="/contact">{text("退款与售后政策", "Refund and Support Policy")}</a>
+            </section>
+            <button className="account-logout" type="button" onClick={logout}>{text("退出登录", "Log Out")}</button>
+          </div>
+        ) : (
+          <div className="account-auth-layout">
+            <div className="account-auth-tabs" role="tablist" aria-label={text("账户入口", "Account actions")}>
+              <button className={mode === "login" ? "is-active" : ""} type="button" onClick={() => setMode("login")}>{text("登录", "Log In")}</button>
+              <button className={mode === "register" ? "is-active" : ""} type="button" onClick={() => setMode("register")}>{text("注册", "Register")}</button>
+            </div>
+            <div className="account-auth-copy">
+              <h3>{mode === "login" ? text("选择一种方式登录", "Choose a login method") : text("选择一种方式验证并注册", "Choose a method to verify and register")}</h3>
+              <p>{text("正式接入后，系统会把第三方身份绑定到你的 Oufan 账户，用于订单、钱包和客服记录。", "After production integration, the system will bind the third-party identity to your Oufan account for orders, wallet, and support history.")}</p>
+            </div>
+            <div className="account-provider-grid">
+              {authProviders.map((provider) => (
+                <button className={"account-provider " + provider.className} type="button" key={provider.key} onClick={() => startProviderAuth(provider)}>
+                  <span>{provider.badge}</span>
+                  <strong>{provider.name}</strong>
+                  <small>{providerCopy[provider.key][isEnglish ? "en" : "zh"]}</small>
+                </button>
+              ))}
+            </div>
+            {notice ? <div className="account-notice">{notice}</div> : null}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SupportChatPanel({ open, initialChannel = "whatsapp", onClose, language }) {
+  const [session, setSession] = useState(null);
+  const [activeChannel, setActiveChannel] = useState(initialChannel);
+  const [message, setMessage] = useState("");
+  const [history, setHistory] = useState([]);
+  const [notice, setNotice] = useState("");
+  const isEnglish = language === "en";
+  const text = (zh, en) => (isEnglish ? en : zh);
+
+  const channels = [
+    { key: "whatsapp", name: "WhatsApp", shortName: "WA", badgeClass: "support-badge-whatsapp", loginText: text("请先登录并绑定 WhatsApp 手机号，再使用 WhatsApp 客服。", "Log in and bind your WhatsApp phone number before using WhatsApp support."), configLabel: "WHATSAPP_BUSINESS_PHONE_NUMBER_ID / WHATSAPP_ACCESS_TOKEN", authPath: "/api/auth/whatsapp" },
+    { key: "messenger", name: "Messenger", shortName: "MS", badgeClass: "support-badge-messenger", loginText: text("请先登录 Messenger / Facebook 账号，再使用 Messenger 客服。", "Log in with Messenger / Facebook before using Messenger support."), configLabel: "FACEBOOK_PAGE_ID / MESSENGER_PAGE_ACCESS_TOKEN", authPath: "/api/auth/messenger" },
+    { key: "facebook", name: "Facebook", shortName: "FB", badgeClass: "support-badge-facebook", loginText: text("请先通过 Facebook Login 绑定账号，再进入 Facebook 客服。", "Bind your account with Facebook Login before entering Facebook support."), configLabel: "META_APP_ID / META_APP_SECRET", authPath: "/api/auth/facebook" },
+    { key: "email", name: text("邮件客服", "Email Support"), shortName: "@", badgeClass: "support-badge-email", loginText: text("邮件客服无需第三方登录，可直接发送邮件。", "Email support does not require third-party login."), configLabel: "SMTP / support mailbox", authPath: "mailto:hello@lppbeach.com" }
+  ];
+
+  useEffect(() => {
+    if (!open) return;
+    const nextSession = readAccountSession();
+    setSession(nextSession);
+    fetch("/api/account/session")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.session) {
+          setSession(data.session);
+          window.localStorage.setItem(ACCOUNT_SESSION_KEY, JSON.stringify(data.session));
+        }
+      })
+      .catch(() => {});
+    setActiveChannel(initialChannel);
+    setNotice("");
+    try {
+      const savedHistory = JSON.parse(window.localStorage.getItem(CHAT_HISTORY_KEY + "_" + initialChannel) || "[]");
+      setHistory(Array.isArray(savedHistory) ? savedHistory : []);
+    } catch {
+      setHistory([]);
+    }
+  }, [open, initialChannel]);
+
+  const active = channels.find((channel) => channel.key === activeChannel) || channels[0];
+  const boundProviders = session?.boundProviders || [];
+  const canChat = active.key === "email" || (session && boundProviders.includes(active.key));
+
+  function requestChannelLogin() {
+    if (active.key === "email") {
+      window.location.href = active.authPath;
+      return;
+    }
+    setNotice(text("正在进入 " + active.name + " 授权/客服入口...", "Opening " + active.name + " authorization/support entry..."));
+    window.location.href = active.authPath;
+  }
+
+  function sendMessage(event) {
+    event.preventDefault();
+    const cleanMessage = message.trim();
+    if (!cleanMessage || !canChat) return;
+    const now = new Date();
+    const time = now.toLocaleTimeString(isEnglish ? "en-US" : "zh-CN", { hour: "2-digit", minute: "2-digit" });
+    const nextHistory = [
+      ...history,
+      { id: String(now.getTime()), channel: active.key, text: cleanMessage, time },
+      { id: String(now.getTime()) + "-reply", channel: "support", text: text("这是 " + active.name + " 独立客服窗口。真实接入后消息会进入对应平台的客服收件箱。", "This is the dedicated " + active.name + " support window. After production integration, messages will go to that platform's support inbox."), time }
+    ];
+    setHistory(nextHistory);
+    window.localStorage.setItem(CHAT_HISTORY_KEY + "_" + active.key, JSON.stringify(nextHistory));
+    setMessage("");
+  }
+
+  if (!open) return null;
+
+  return (
+    <div className="support-overlay" role="dialog" aria-modal="true" aria-labelledby="support-panel-title">
+      <div className="support-panel channel-panel">
+        <button className="support-close" type="button" onClick={onClose} aria-label={text("关闭客服窗口", "Close support window")}>×</button>
+        <div className="support-intro channel-intro">
+          <p className="eyebrow">{text("独立客服通道", "Dedicated Support Channel")}</p>
+          <h2 id="support-panel-title">{active.name}</h2>
+          <p>{active.loginText}</p>
+        </div>
+        <div className="channel-layout">
+          <aside className="channel-switcher" aria-label={text("切换客服渠道", "Switch support channel")}>
+            {channels.map((channel) => (
+              <button className={activeChannel === channel.key ? "is-active" : ""} type="button" key={channel.key} onClick={() => {
+                setActiveChannel(channel.key);
+                setNotice("");
+                try {
+                  const savedHistory = JSON.parse(window.localStorage.getItem(CHAT_HISTORY_KEY + "_" + channel.key) || "[]");
+                  setHistory(Array.isArray(savedHistory) ? savedHistory : []);
+                } catch {
+                  setHistory([]);
+                }
+              }}>
+                <span className={"support-badge " + channel.badgeClass}>{channel.shortName}</span>
+                <strong>{channel.name}</strong>
+              </button>
+            ))}
+          </aside>
+          <section className="support-chat channel-chat">
+            <div className="support-chat-head">
+              <span className={"support-badge " + active.badgeClass}>{active.shortName}</span>
+              <div>
+                <strong>{active.name}</strong>
+                <small>{canChat ? text("已满足当前通道聊天条件", "This channel is ready for chat.") : active.loginText}</small>
+              </div>
+            </div>
+            {!canChat ? (
+              <div className="channel-login-gate">
+                <span className={"support-badge " + active.badgeClass}>{active.shortName}</span>
+                <h3>{text("需要先登录/绑定", "Login or binding required")}</h3>
+                <p>{active.loginText}</p>
+                <button type="button" onClick={requestChannelLogin}>{text("登录 " + active.name, "Log in with " + active.name)}</button>
+                {notice ? <small>{notice}</small> : null}
+              </div>
+            ) : (
+              <>
+                <div className="support-chat-body" aria-live="polite">
+                  {history.length ? history.map((item) => (
+                    <div className={"support-message" + (item.channel === "support" ? " is-support" : "")} key={item.id}>
+                      <p>{item.text}</p>
+                      <span>{item.channel === "support" ? "Oufan" : active.name} · {item.time}</span>
+                    </div>
+                  )) : <div className="support-empty">{text("这是 " + active.name + " 的独立聊天窗口。", "This is the dedicated " + active.name + " chat window.")}</div>}
+                </div>
+                <form className="support-chat-form" onSubmit={sendMessage}>
+                  <input type="text" value={message} onChange={(event) => setMessage(event.target.value)} placeholder={text("输入要发送给客服的消息", "Type a message to support")} />
+                  <button type="submit">{text("发送", "Send")}</button>
+                </form>
+              </>
+            )}
+          </section>
+        </div>
+      </div>
     </div>
   );
 }
@@ -657,8 +967,8 @@ export function Footer() {
   return (
     <footer className="site-footer">
       <div>
-        <a className="footer-showcase-brand" href="/" aria-label="LPP 草帽品牌展示站">
-          <span>LPP</span>
+        <a className="footer-showcase-brand" href="/" aria-label="Oufan 草帽品牌展示站">
+          <img src="/assets/oufan-logo.jpg" alt="Oufan 草帽品牌标志" />
           <strong>草帽品牌展示站</strong>
         </a>
         <p>面向海滩、冲浪、园艺、户外团队和品牌活动的草帽展示站，支持批发与 Logo 定制咨询。</p>
@@ -813,6 +1123,14 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
 
   useEffect(() => setSearch(initialSearch), [initialSearch]);
   useEffect(() => setFilter(initialFilter), [initialFilter]);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlFilter = params.get("filter");
+    const urlSearch = params.get("keywords");
+
+    if (urlFilter) setFilter(urlFilter);
+    if (urlSearch) setSearch(urlSearch);
+  }, []);
   useEffect(() => {
     const syncCatalog = () => setCatalog(getClientProducts());
     syncCatalog();
@@ -1140,16 +1458,19 @@ export function NewsletterCta() {
   );
 }
 
-export function StorageCollectionView({ type, initialProductSlug, initialQuantity = 1 }) {
+export function StorageCollectionView({ type, initialProductSlug, initialQuantity }) {
   const initialized = useRef(false);
   const [items, setItems] = useState([]);
 
   useEffect(() => {
     const key = STORAGE_KEYS[type];
+    const params = new URLSearchParams(window.location.search);
+    const productSlug = initialProductSlug || params.get("product") || "";
+    const quantity = Number(initialQuantity) || Number(params.get("qty")) || 1;
 
-    if (type === "cart" && initialProductSlug && !initialized.current) {
+    if (type === "cart" && productSlug && !initialized.current) {
       initialized.current = true;
-      addToCart(initialProductSlug, Number(initialQuantity) || 1);
+      addToCart(productSlug, quantity);
     }
 
     const sync = () => {

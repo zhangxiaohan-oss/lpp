@@ -1,4 +1,4 @@
-const FALLBACK_USD_CNY = 6.79;
+﻿const FALLBACK_USD_CNY = 6.79;
 
 export async function GET() {
   try {

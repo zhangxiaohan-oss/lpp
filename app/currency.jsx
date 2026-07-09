@@ -13,13 +13,21 @@ function loadRateInfo() {
   if (cachedRateInfo) return Promise.resolve(cachedRateInfo);
   if (rateInfoPromise) return rateInfoPromise;
 
-  rateInfoPromise = fetch("/api/exchange-rate")
+  rateInfoPromise = fetch("https://open.er-api.com/v6/latest/USD")
     .then((response) => response.json())
     .then((payload) => {
-      const rate = Number(payload?.rate);
+      const rate = Number(payload?.rates?.CNY);
       if (Number.isFinite(rate) && rate > 0) {
-        cachedRateInfo = payload;
-        return payload;
+        cachedRateInfo = {
+          base: "USD",
+          target: "CNY",
+          rate,
+          updatedAt: payload.time_last_update_utc,
+          nextUpdateAt: payload.time_next_update_utc,
+          fallback: false,
+          source: "open.er-api.com"
+        };
+        return cachedRateInfo;
       }
       throw new Error("Invalid exchange rate payload");
     })

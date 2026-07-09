@@ -4,11 +4,7 @@ export const metadata = {
   title: "商店 | LPP 草帽店"
 };
 
-export default async function ShopPage({ searchParams }) {
-  const query = await searchParams;
-  const initialFilter = typeof query?.filter === "string" ? query.filter : "all";
-  const initialSearch = typeof query?.keywords === "string" ? query.keywords : "";
-
+export default function ShopPage() {
   return (
     <>
       <Header />
@@ -21,7 +17,7 @@ export default async function ShopPage({ searchParams }) {
         <ServicePromises />
         <CategoryShowcase />
         <section className="shop-section">
-          <ProductGrid initialFilter={initialFilter} initialSearch={initialSearch} />
+          <ProductGrid />
         </section>
         <FaqSection />
       </main>

@@ -4,11 +4,7 @@ export const metadata = {
   title: "购物车 | LPP 草帽店"
 };
 
-export default async function CartPage({ searchParams }) {
-  const query = await searchParams;
-  const initialProductSlug = typeof query?.product === "string" ? query.product : "";
-  const initialQuantity = typeof query?.qty === "string" ? Number(query.qty) : 1;
-
+export default function CartPage() {
   return (
     <>
       <Header />
@@ -19,7 +15,7 @@ export default async function CartPage({ searchParams }) {
           <p>这里是前端演示购物车，会保存你本次浏览器里加入的商品，适合展示购买流程。</p>
         </section>
         <section className="cart-page">
-          <StorageCollectionView type="cart" initialProductSlug={initialProductSlug} initialQuantity={initialQuantity} />
+          <StorageCollectionView type="cart" />
         </section>
       </main>
       <Footer />
