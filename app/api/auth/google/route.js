@@ -1,10 +1,11 @@
-﻿import { NextResponse } from "next/server";
-import { callbackUrl, requireEnv } from "../_shared/utils";
+import { NextResponse } from "next/server";
+import { callbackUrl, createOAuthState, oauthStateCookie, requireEnv } from "../_shared/utils";
 
 export async function GET(request) {
   const missing = requireEnv("Google / Gmail 登录", ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]);
   if (missing) return missing;
 
+  const state = createOAuthState("google");
   const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   authUrl.searchParams.set("client_id", process.env.GOOGLE_CLIENT_ID);
   authUrl.searchParams.set("redirect_uri", callbackUrl(request, "google"));
@@ -12,5 +13,9 @@ export async function GET(request) {
   authUrl.searchParams.set("scope", "openid email profile");
   authUrl.searchParams.set("access_type", "offline");
   authUrl.searchParams.set("prompt", "select_account");
-  return NextResponse.redirect(authUrl);
+  authUrl.searchParams.set("state", state);
+
+  const response = NextResponse.redirect(authUrl);
+  response.headers.append("set-cookie", oauthStateCookie("google", state));
+  return response;
 }

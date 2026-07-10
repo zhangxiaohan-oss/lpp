@@ -879,20 +879,42 @@ function SupportChatPanel({ open, initialChannel = "whatsapp", onClose, language
     window.location.href = active.authPath;
   }
 
-  function sendMessage(event) {
+  async function sendMessage(event) {
     event.preventDefault();
     const cleanMessage = message.trim();
     if (!cleanMessage || !canChat) return;
     const now = new Date();
     const time = now.toLocaleTimeString(isEnglish ? "en-US" : "zh-CN", { hour: "2-digit", minute: "2-digit" });
-    const nextHistory = [
-      ...history,
-      { id: String(now.getTime()), channel: active.key, text: cleanMessage, time },
-      { id: String(now.getTime()) + "-reply", channel: "support", text: text("这是 " + active.name + " 独立客服窗口。真实接入后消息会进入对应平台的客服收件箱。", "This is the dedicated " + active.name + " support window. After production integration, messages will go to that platform's support inbox."), time }
-    ];
+    const userMessage = { id: String(now.getTime()), channel: active.key, text: cleanMessage, time };
+    const nextHistory = [...history, userMessage];
     setHistory(nextHistory);
     window.localStorage.setItem(CHAT_HISTORY_KEY + "_" + active.key, JSON.stringify(nextHistory));
     setMessage("");
+
+    if (active.key === "email") {
+      const email = "hello@lppbeach.com";
+      window.location.href = "mailto:" + email + "?subject=" + encodeURIComponent("Oufan support") + "&body=" + encodeURIComponent(cleanMessage);
+      return;
+    }
+
+    setNotice(text("正在发送到 " + active.name + " 客服通道...", "Sending to the " + active.name + " support channel..."));
+    try {
+      const response = await fetch("/api/support/send", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ channel: active.key, message: cleanMessage, recipient: session?.supportRecipientId || "" })
+      });
+      const data = await response.json().catch(() => ({}));
+      const supportText = data.ok
+        ? text("消息已进入 " + active.name + " 官方客服通道。", "Your message has been sent to the official " + active.name + " support channel.")
+        : text("已保留在本地客服窗口。真实发送还需要在后台获得客户的手机号或 Page 对话 PSID，并配置对应 Token。", "Saved in this support window. Live sending still needs the customer's phone number or Page PSID plus the matching token.");
+      const confirmedHistory = [...nextHistory, { id: String(Date.now()) + "-reply", channel: "support", text: supportText, time }];
+      setHistory(confirmedHistory);
+      window.localStorage.setItem(CHAT_HISTORY_KEY + "_" + active.key, JSON.stringify(confirmedHistory));
+      setNotice(data.ok ? "" : (data.detail || data.error || text("真实发送配置未完成。", "Live sending is not fully configured yet.")));
+    } catch {
+      setNotice(text("网络或接口异常，消息已留在本地窗口。", "Network or API error. The message remains in this local window."));
+    }
   }
 
   if (!open) return null;
