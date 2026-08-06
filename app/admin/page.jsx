@@ -6,6 +6,8 @@ import { products } from "../data";
 const PRODUCT_KEY = "lpp_admin_products";
 const ORDER_KEY = "lpp_admin_orders";
 const USER_KEY = "lpp_admin_users";
+const USER_PASSWORD_RESET_KEY = "lpp_admin_superadmin_password_reset_version";
+const USER_PASSWORD_RESET_VERSION = "2026-08-06-superadmin-default-password";
 
 const permissionCatalog = [
   ["products", "商品编辑", "新增商品、编辑基础资料和库存"],
@@ -230,9 +232,17 @@ export default function AdminPage() {
 
   useEffect(() => {
     const savedUsers = readJson(USER_KEY, []);
-    const initialUsers = savedUsers.length ? savedUsers : seedUsers();
+    const shouldResetSuperadminPassword = window.localStorage.getItem(USER_PASSWORD_RESET_KEY) !== USER_PASSWORD_RESET_VERSION;
+    const initialUsers = savedUsers.length ? savedUsers.map((user) => (
+      shouldResetSuperadminPassword && user.username === "superadmin"
+        ? { ...user, password: "lpp-demo", mustChangePassword: true }
+        : user
+    )) : seedUsers();
     setUsers(initialUsers);
-    if (!savedUsers.length) writeJson(USER_KEY, initialUsers, "lpp-admin-users-change");
+    if (!savedUsers.length || shouldResetSuperadminPassword) {
+      writeJson(USER_KEY, initialUsers, "lpp-admin-users-change");
+      window.localStorage.setItem(USER_PASSWORD_RESET_KEY, USER_PASSWORD_RESET_VERSION);
+    }
 
     const savedProducts = readJson(PRODUCT_KEY, []);
     const initialProducts = savedProducts.length ? savedProducts.map((product, index) => normalizeProduct(product, index)) : seedProducts();
