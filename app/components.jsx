@@ -1034,23 +1034,25 @@ export function HeroSlider({ slides }) {
   const slide = slides[active];
 
   return (
-    <section id="home" className="hero">
+    <section id="home" className={"hero" + (slide.posterOnly ? " hero-poster-only" : "")}>
       <div className="hero-media">
         <img src={slide.image} alt={slide.title} />
       </div>
-      <div className="hero-copy">
-        <p className="eyebrow">{slide.eyebrow}</p>
-        <h1>{slide.title}</h1>
-        <p>{slide.description}</p>
-        <div className="hero-actions">
-          <a className="button button-primary" href={slide.href}>
-            {slide.cta}
-          </a>
-          <a className="button button-light" href="/shop?filter=custom">
-            查看定制款
-          </a>
+      {!slide.posterOnly ? (
+        <div className="hero-copy">
+          <p className="eyebrow">{slide.eyebrow}</p>
+          <h1>{slide.title}</h1>
+          <p>{slide.description}</p>
+          <div className="hero-actions">
+            <a className="button button-primary" href={slide.href}>
+              {slide.cta}
+            </a>
+            <a className="button button-light" href="/shop?filter=custom">
+              查看定制款
+            </a>
+          </div>
         </div>
-      </div>
+      ) : null}
       {slides.length > 1 ? (
         <div className="hero-dots" aria-label="切换海报">
           {slides.map((item, index) => (

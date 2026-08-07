@@ -65,16 +65,18 @@ export const heroSlides = [
     eyebrow: "天然草编帽",
     title: "戴上我们的草帽，保持清爽与有型",
     description: "为海滩、冲浪、钓鱼、园艺和户外工作设计的宽檐草帽，兼顾防晒、透气和品牌展示。",
-    image: "/assets/source-banner-model-generated.png",
-    cta: "立即选购",
+    image: "/assets/home-hero-vintage-elegance.jpg",
+      posterOnly: true,
+      cta: "立即选购",
     href: "/shop"
   },
   {
     eyebrow: "批发与定制",
     title: "让你的 Logo 出现在夏天最显眼的位置",
     description: "支持贴章、印花、帽底图案和团队采购，适合冲浪店、度假村、活动周边与户外团队。",
-    image: "/assets/source-banner-custom-generated.png",
-    cta: "咨询定制",
+    image: "/assets/home-hero-factory-direct.jpg",
+      posterOnly: true,
+      cta: "咨询定制",
     href: "/customize"
   }
 ];

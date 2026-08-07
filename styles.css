@@ -552,6 +552,19 @@ button {
   object-fit: cover;
 }
 
+.hero-poster-only {
+  min-height: clamp(520px, 56.25vw, 900px);
+  background: #f8f6ed;
+}
+
+.hero-poster-only .hero-media::after {
+  display: none;
+}
+
+.hero-poster-only .hero-media img {
+  object-position: center;
+}
+
 .hero-copy {
   position: relative;
   z-index: 1;
