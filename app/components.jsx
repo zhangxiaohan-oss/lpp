@@ -381,10 +381,21 @@ function toggleListItem(key, slug) {
   return next.includes(slug);
 }
 function getClientProducts({ includeInactive = false } = {}) {
-  const managedProducts = readJson(ADMIN_PRODUCTS_KEY, null);
-  const source = Array.isArray(managedProducts) && managedProducts.length ? managedProducts : products;
+  const managedProducts = readJson(ADMIN_PRODUCTS_KEY, []);
+  const merged = new Map();
 
-  return source
+  products.forEach((product, index) => {
+    merged.set(product.slug || `seed-${index}`, product);
+  });
+
+  if (Array.isArray(managedProducts)) {
+    managedProducts.forEach((product, index) => {
+      const key = product.slug || product.id || `admin-${index}`;
+      merged.set(key, { ...product, adminManaged: product.adminManaged ?? true });
+    });
+  }
+
+  return Array.from(merged.values())
     .filter((product) => includeInactive || (product.status || "active") === "active")
     .map((product, index) => {
       const image = product.image || "/assets/product-01.jpg";
@@ -400,6 +411,7 @@ function getClientProducts({ includeInactive = false } = {}) {
         id: product.id || `admin-${index + 1}`,
         slug: product.slug || `admin-product-${index + 1}`,
         title: product.title || "未命名商品",
+        sku: product.sku || (Array.isArray(product.skus) ? product.skus.join(", ") : ""),
         price: product.price === "" || product.price === null || product.price === undefined ? null : Number(product.price),
         image,
         tags,
@@ -1169,7 +1181,7 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
   const visibleProducts = useMemo(() => {
     const searchText = search.trim().toLowerCase();
     const items = catalog.filter((product) => {
-      const haystack = [product.title, product.description, product.tags.join(" ")].join(" ").toLowerCase();
+      const haystack = [product.title, product.description, product.category, product.sku, product.tags.join(" ")].join(" ").toLowerCase();
       const tags = product.tags.map((tag) => tag.toLowerCase());
       return (!searchText || haystack.includes(searchText)) && (filter === "all" || tags.includes(filter));
     });
@@ -1263,7 +1275,7 @@ export function ProductCard({ product }) {
           <Rating rating={product.rating} count={product.reviewCount} />
         </div>
         <h3>
-          <a href={productPath(product)}>{product.title}</a>
+          <a href={detailHref}>{product.title}</a>
         </h3>
         <TagRow tags={product.tags.slice(0, 3)} />
         <div className="price">
