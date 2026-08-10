@@ -135,6 +135,16 @@ function seedUsers() {
   ];
 }
 
+function parseSkuList(value) {
+  const raw = Array.isArray(value) ? value.join(",") : String(value || "");
+  return Array.from(new Set(raw.split(/[\n,，;；]+/).map((item) => item.trim()).filter(Boolean)));
+}
+
+function displaySku(product) {
+  const list = Array.isArray(product.skus) && product.skus.length ? product.skus : parseSkuList(product.sku);
+  return list.length ? list.join(" / ") : "未填写 SKU";
+}
+
 function normalizeProduct(product, index) {
   const title = product.title || `商品 ${index + 1}`;
   const slug = product.slug || title.toLowerCase().trim().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-").replace(/^-|-$/g, "") || `admin-product-${Date.now()}`;
@@ -275,7 +285,7 @@ export default function AdminPage() {
   const visibleProducts = useMemo(() => {
     const text = query.trim().toLowerCase();
     if (!text) return items;
-    return items.filter((item) => [item.title, item.sku, item.category, item.status, item.tags?.join(" ")].join(" ").toLowerCase().includes(text));
+    return items.filter((item) => [item.title, displaySku(item), item.category, item.status, item.tags?.join(" ")].join(" ").toLowerCase().includes(text));
   }, [items, query]);
 
   function saveProducts(nextItems) {
@@ -541,10 +551,10 @@ export default function AdminPage() {
             <div className="admin-form-grid">
               <label>商品名<input value={form.title} onChange={(event) => updateForm("title", event.target.value)} required /></label>
               <label>Slug<input value={form.slug} onChange={(event) => updateForm("slug", event.target.value)} placeholder="自动生成或手动填写" /></label>
-              <label>价格<input type="number" step="0.01" value={form.price ?? ""} onChange={(event) => updateForm("price", event.target.value)} placeholder="留空为定制报价" /></label>
+              <label>价格（美元 USD）<div className="admin-price-input"><input type="number" step="0.01" value={form.price ?? ""} onChange={(event) => updateForm("price", event.target.value)} placeholder="留空为定制报价" /><span>前台可切换 CNY</span></div><small className="admin-field-hint">后台价格按美元保存；前台价格旁可在 USD / CNY 间切换，人民币按实时或备用汇率换算。</small></label>
               <label>库存<input type="number" value={form.stock} onChange={(event) => updateForm("stock", event.target.value)} /></label>
               <label>分类<input value={form.category} onChange={(event) => updateForm("category", event.target.value)} /></label>
-              <label>SKU<input value={form.sku} onChange={(event) => updateForm("sku", event.target.value)} /></label>
+              <label>SKU（可填多个）<textarea value={form.sku} onChange={(event) => updateForm("sku", event.target.value)} placeholder="例：OUFAN-YELLOW, OUFAN-BLUE；多个 SKU 用逗号或换行分隔" /><small className="admin-field-hint">同一商品有多个颜色、尺码或渠道编码时，可以一次填多个 SKU。</small></label>
               <label>图片 URL<input value={form.image?.startsWith("data:") ? "" : form.image} onChange={(event) => updateProductImageUrl(event.target.value)} placeholder="可手动填写 URL，或用下方按钮选择本地图片" /></label>
               <label>标签<input value={form.tags} onChange={(event) => updateForm("tags", event.target.value)} /></label>
               <label>成本<input type="number" step="0.01" value={form.cost ?? ""} onChange={(event) => updateForm("cost", event.target.value)} /></label>

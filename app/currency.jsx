@@ -61,6 +61,13 @@ function formatUsd(value) {
   }).format(value);
 }
 
+function setSelectedCurrency(code) {
+  if (typeof window === "undefined") return;
+  const next = code === "USD" ? "USD" : "CNY";
+  window.localStorage.setItem(CURRENCY_KEY, next);
+  window.dispatchEvent(new Event(CURRENCY_EVENT));
+}
+
 function getSelectedCurrency() {
   if (typeof window === "undefined") return "CNY";
   const saved = window.localStorage.getItem(CURRENCY_KEY);
@@ -119,8 +126,32 @@ export function Price({ price, priceLabel, compact = false }) {
 
   return (
     <span className="price-cny" title={rateText}>
-      <span>{converted}</span>
+      <span className="price-main-line">
+        <span>{converted}</span>
+        {compact ? null : <CurrencyToggle currency={currency} />}
+      </span>
       {compact ? null : <small>{rateText}</small>}
+    </span>
+  );
+}
+
+export function CurrencyToggle({ currency }) {
+  return (
+    <span className="currency-inline-toggle" aria-label="价格币种切换">
+      <button
+        type="button"
+        className={currency === "USD" ? "is-active" : ""}
+        onClick={() => setSelectedCurrency("USD")}
+      >
+        USD
+      </button>
+      <button
+        type="button"
+        className={currency === "CNY" ? "is-active" : ""}
+        onClick={() => setSelectedCurrency("CNY")}
+      >
+        CNY
+      </button>
     </span>
   );
 }

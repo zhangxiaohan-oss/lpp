@@ -1126,7 +1126,7 @@ export function CategoryShowcase() {
                       <img src={product.image} alt={product.title} />
                       <strong>{product.title}</strong>
                       <span className="mini-price">
-                        <Price price={product.price} priceLabel={product.priceLabel} />
+                        <Price price={product.price} priceLabel={product.priceLabel} compact />
                       </span>
                     </a>
                   ))}
