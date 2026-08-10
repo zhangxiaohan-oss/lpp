@@ -2907,3 +2907,10 @@ button {
   padding: 10px 12px;
   font-weight: 900;
 }
+
+.admin-cloud-status {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  margin-right: auto;
+}

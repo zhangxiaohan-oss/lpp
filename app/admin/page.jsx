@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { products } from "../data";
 
 const PRODUCT_KEY = "lpp_admin_products";
+const PRODUCT_SYNC_TOKEN_KEY = "lpp_admin_publish_token";
 const ORDER_KEY = "lpp_admin_orders";
 const USER_KEY = "lpp_admin_users";
 const SETTINGS_KEY = "lpp_admin_settings";
@@ -77,6 +78,42 @@ function readJson(key, fallback) {
 function writeJson(key, value, eventName) {
   window.localStorage.setItem(key, JSON.stringify(value));
   if (eventName) window.dispatchEvent(new Event(eventName));
+}
+async function fetchRemoteProducts() {
+  const response = await fetch("/api/admin/products", { cache: "no-store" });
+  if (!response.ok) throw new Error("云端商品读取失败");
+  const data = await response.json();
+  return Array.isArray(data.products) ? data.products : [];
+}
+
+async function pushRemoteProducts(products) {
+  let token = window.localStorage.getItem(PRODUCT_SYNC_TOKEN_KEY) || "";
+  let response = await fetch("/api/admin/products", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-token": token
+    },
+    body: JSON.stringify({ products })
+  });
+
+  if (response.status === 401) {
+    token = window.prompt("请输入后台发布密钥。这个密钥需要和 Netlify 环境变量 ADMIN_API_TOKEN 一致，用于保护线上商品库。") || "";
+    if (!token) throw new Error("缺少后台发布密钥，商品只保存到本机浏览器");
+    window.localStorage.setItem(PRODUCT_SYNC_TOKEN_KEY, token);
+    response = await fetch("/api/admin/products", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-token": token
+      },
+      body: JSON.stringify({ products })
+    });
+  }
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.ok === false) throw new Error(data.error || "云端商品保存失败");
+  return data;
 }
 
 function readImageFiles(files) {
@@ -246,6 +283,7 @@ export default function AdminPage() {
   const [showUserForm, setShowUserForm] = useState(false);
   const [settings, setSettings] = useState(defaultSettings);
   const [settingsSaved, setSettingsSaved] = useState(false);
+  const [cloudStatus, setCloudStatus] = useState("正在读取云端商品...");
 
   const power = currentUser ? mergePermissions(currentUser) : rolePresets.super.permissions;
   const currentRoleLabel = currentUser ? roleLabel(currentUser.role) : "未登录";
@@ -272,6 +310,26 @@ export default function AdminPage() {
     setItems(initialProducts);
     if (!savedProducts.length) writeJson(PRODUCT_KEY, initialProducts, "lpp-admin-products-change");
 
+    let ignoreRemoteProducts = false;
+    fetchRemoteProducts()
+      .then((remoteProducts) => {
+        if (ignoreRemoteProducts) return;
+        if (remoteProducts.length) {
+          const normalizedRemote = remoteProducts.map((product, index) => normalizeProduct(product, index));
+          setItems(normalizedRemote);
+          writeJson(PRODUCT_KEY, normalizedRemote, "lpp-admin-products-change");
+          setCloudStatus(`已同步云端商品：${normalizedRemote.length} 个`);
+          return;
+        }
+        setCloudStatus(savedProducts.length ? "云端暂无商品，正在上传本机后台商品..." : "云端暂无后台商品，新增或保存后会同步");
+        if (savedProducts.length) {
+          pushRemoteProducts(initialProducts)
+            .then(() => setCloudStatus(`已把本机后台商品同步到云端：${initialProducts.length} 个`))
+            .catch((error) => setCloudStatus(error.message));
+        }
+      })
+      .catch((error) => setCloudStatus(error.message || "云端商品读取失败，本机缓存仍可用"));
+
     const syncOrders = () => {
       const savedOrders = readJson(ORDER_KEY, []);
       const initialOrders = savedOrders.length ? savedOrders : seedOrders();
@@ -285,6 +343,7 @@ export default function AdminPage() {
     return () => {
       window.removeEventListener("lpp-admin-orders-change", syncOrders);
       window.removeEventListener("storage", syncOrders);
+      ignoreRemoteProducts = true;
     };
   }, []);
 
@@ -304,6 +363,10 @@ export default function AdminPage() {
   function saveProducts(nextItems) {
     setItems(nextItems);
     writeJson(PRODUCT_KEY, nextItems, "lpp-admin-products-change");
+    setCloudStatus("正在同步商品到云端...");
+    pushRemoteProducts(nextItems)
+      .then(() => setCloudStatus(`已同步云端商品：${nextItems.length} 个`))
+      .catch((error) => setCloudStatus(error.message));
   }
 
   function saveOrders(nextOrders) {
@@ -620,7 +683,7 @@ export default function AdminPage() {
             {!power.publish ? <p className="admin-note">当前账号不能发布，上架状态会自动保存为草稿。</p> : null}
             <button className="admin-primary" type="submit">{editingId ? "保存商品" : "新增商品"}</button>
           </form>
-          <div className="admin-panel"><div className="admin-panel-head"><h2>商品列表</h2><input className="admin-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索商品、SKU、分类" /></div><div className="admin-product-table">{visibleProducts.map((product) => <article key={product.id}><img src={product.image} alt="" /><div><strong>{product.title}</strong><span>{product.sku} · {product.category} · 库存 {product.stock}</span></div><b>{money(product.price)}</b><em className={`admin-status ${product.status}`}>{product.status}</em><div className="admin-row-actions"><button type="button" onClick={() => editProduct(product)}>编辑</button><button type="button" disabled={!power.publish} onClick={() => setProductStatus(product, product.status === "active" ? "inactive" : "active")}>{product.status === "active" ? "下架" : "上架"}</button><button type="button" disabled={!power.remove} onClick={() => deleteProduct(product.id)}>删除</button></div></article>)}</div></div>
+          <div className="admin-panel"><div className="admin-panel-head"><h2>商品列表</h2><span className="admin-cloud-status">{cloudStatus}</span><input className="admin-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索商品、SKU、分类" /></div><div className="admin-product-table">{visibleProducts.map((product) => <article key={product.id}><img src={product.image} alt="" /><div><strong>{product.title}</strong><span>{product.sku} · {product.category} · 库存 {product.stock}</span></div><b>{money(product.price)}</b><em className={`admin-status ${product.status}`}>{product.status}</em><div className="admin-row-actions"><button type="button" onClick={() => editProduct(product)}>编辑</button><button type="button" disabled={!power.publish} onClick={() => setProductStatus(product, product.status === "active" ? "inactive" : "active")}>{product.status === "active" ? "下架" : "上架"}</button><button type="button" disabled={!power.remove} onClick={() => deleteProduct(product.id)}>删除</button></div></article>)}</div></div>
         </section> : null}
 
         {tab === "orders" ? <section className="admin-panel"><div className="admin-panel-head"><h2>订单列表</h2><span>前台提交订单后会出现在这里</span></div><div className="admin-order-list">{orders.map((order) => <article key={order.id}><img src={order.productImage} alt="" /><div className="admin-order-main"><div><strong>{order.id}</strong><span>{time(order.createdAt)} · {order.source}</span></div><h3>{order.productTitle}</h3><p>{order.customer.name} · {order.customer.phone || "未填电话"} · {order.customer.address || "未填地址"}</p><small>{order.notes || "无备注"}</small></div><div className="admin-order-side"><b>{money(order.total)}</b><em className={`admin-status ${order.status}`}>{order.status}</em><span>数量 {order.quantity}</span></div><div className="admin-row-actions"><button type="button" onClick={() => updateOrder(order.id, { status: "accepted", fulfillmentStatus: "processing" }, "管理员接单")}>接单</button><button type="button" onClick={() => updateOrder(order.id, { status: "shipped", fulfillmentStatus: "shipped" }, "订单发货")}>发货</button><button type="button" onClick={() => updateOrder(order.id, { status: "completed", fulfillmentStatus: "fulfilled" }, "订单完成")}>完成</button><button type="button" onClick={() => updateOrder(order.id, { status: "cancelled" }, "订单取消")}>取消</button><button type="button" onClick={() => updateOrder(order.id, { status: "refund", paymentStatus: "refund" }, "申请退款")}>退款</button></div></article>)}</div></section> : null}

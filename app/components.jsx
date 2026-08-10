@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Price } from "./currency";
@@ -353,9 +353,20 @@ function readJson(key, fallback) {
   }
 }
 
-function writeJson(key, value) {
+function writeJson(key, value, eventName = "lpp-store-change") {
   window.localStorage.setItem(key, JSON.stringify(value));
-  window.dispatchEvent(new Event("lpp-store-change"));
+  window.dispatchEvent(new Event(eventName));
+}
+
+async function readCloudProducts() {
+  try {
+    const response = await fetch("/api/admin/products", { cache: "no-store" });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return Array.isArray(data.products) ? data.products : [];
+  } catch {
+    return [];
+  }
 }
 
 function getCartCount() {
@@ -380,8 +391,7 @@ function toggleListItem(key, slug) {
   writeJson(key, next);
   return next.includes(slug);
 }
-function getClientProducts({ includeInactive = false } = {}) {
-  const managedProducts = readJson(ADMIN_PRODUCTS_KEY, []);
+function getClientProducts({ includeInactive = false, managedProducts = readJson(ADMIN_PRODUCTS_KEY, []) } = {}) {
   const merged = new Map();
 
   products.forEach((product, index) => {
@@ -1170,6 +1180,11 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
   useEffect(() => {
     const syncCatalog = () => setCatalog(getClientProducts());
     syncCatalog();
+    readCloudProducts().then((cloudProducts) => {
+      if (!cloudProducts.length) return;
+      writeJson(ADMIN_PRODUCTS_KEY, cloudProducts, "lpp-admin-products-change");
+      setCatalog(getClientProducts({ managedProducts: cloudProducts }));
+    });
     window.addEventListener("lpp-admin-products-change", syncCatalog);
     window.addEventListener("storage", syncCatalog);
     return () => {
@@ -1523,8 +1538,23 @@ export function StorageCollectionView({ type, initialProductSlug, initialQuantit
         setItems(slugs.map((slug) => catalog.find((item) => item.slug === slug)).filter(Boolean));
       }
     };
-
     sync();
+    readCloudProducts().then((cloudProducts) => {
+      if (!cloudProducts.length) return;
+      writeJson(ADMIN_PRODUCTS_KEY, cloudProducts, "lpp-admin-products-change");
+      const catalog = getClientProducts({ includeInactive: true, managedProducts: cloudProducts });
+      if (type === "cart") {
+        const cart = readJson(key, {});
+        setItems(
+          Object.values(cart)
+            .map((entry) => ({ product: catalog.find((item) => item.slug === entry.slug), qty: entry.qty }))
+            .filter((entry) => entry.product)
+        );
+      } else {
+        const slugs = readJson(key, []);
+        setItems(slugs.map((slug) => catalog.find((item) => item.slug === slug)).filter(Boolean));
+      }
+    });
     window.addEventListener("lpp-admin-products-change", sync);
     window.addEventListener("lpp-store-change", sync);
     window.addEventListener("storage", sync);
