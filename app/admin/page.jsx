@@ -6,6 +6,7 @@ import { products } from "../data";
 const PRODUCT_KEY = "lpp_admin_products";
 const ORDER_KEY = "lpp_admin_orders";
 const USER_KEY = "lpp_admin_users";
+const SETTINGS_KEY = "lpp_admin_settings";
 const USER_PASSWORD_RESET_KEY = "lpp_admin_superadmin_password_reset_version";
 const USER_PASSWORD_RESET_VERSION = "2026-08-06-superadmin-default-password";
 
@@ -27,6 +28,13 @@ const rolePresets = {
     label: "普通管理员",
     permissions: { products: true, publish: false, remove: false, orders: true, users: false, settings: false }
   }
+};
+
+const defaultSettings = {
+  storeName: "Oufan",
+  orderPrefix: "OUFAN",
+  defaultCurrency: "USD",
+  stockWarning: 20
 };
 
 const blankProduct = {
@@ -236,6 +244,8 @@ export default function AdminPage() {
   const [userForm, setUserForm] = useState(blankUser);
   const [editingUserId, setEditingUserId] = useState("");
   const [showUserForm, setShowUserForm] = useState(false);
+  const [settings, setSettings] = useState(defaultSettings);
+  const [settingsSaved, setSettingsSaved] = useState(false);
 
   const power = currentUser ? mergePermissions(currentUser) : rolePresets.super.permissions;
   const currentRoleLabel = currentUser ? roleLabel(currentUser.role) : "未登录";
@@ -253,6 +263,9 @@ export default function AdminPage() {
       writeJson(USER_KEY, initialUsers, "lpp-admin-users-change");
       window.localStorage.setItem(USER_PASSWORD_RESET_KEY, USER_PASSWORD_RESET_VERSION);
     }
+
+    const savedSettings = readJson(SETTINGS_KEY, defaultSettings);
+    setSettings({ ...defaultSettings, ...savedSettings });
 
     const savedProducts = readJson(PRODUCT_KEY, []);
     const initialProducts = savedProducts.length ? savedProducts.map((product, index) => normalizeProduct(product, index)) : seedProducts();
@@ -305,6 +318,27 @@ export default function AdminPage() {
       const refreshed = nextUsers.find((user) => user.id === currentUser.id);
       if (refreshed) setCurrentUser(refreshed);
     }
+  }
+
+  function updateSettings(field, value) {
+    setSettingsSaved(false);
+    setSettings((current) => ({ ...current, [field]: value }));
+  }
+
+  function saveSettings(event) {
+    event.preventDefault();
+    if (!power.settings) return;
+    const nextSettings = {
+      ...settings,
+      storeName: String(settings.storeName || "Oufan").trim() || "Oufan",
+      orderPrefix: String(settings.orderPrefix || "OUFAN").trim() || "OUFAN",
+      defaultCurrency: settings.defaultCurrency === "CNY" ? "CNY" : "USD",
+      stockWarning: Math.max(0, Number(settings.stockWarning || 0))
+    };
+    setSettings(nextSettings);
+    writeJson(SETTINGS_KEY, nextSettings, "lpp-admin-settings-change");
+    setSettingsSaved(true);
+    window.setTimeout(() => setSettingsSaved(false), 2200);
   }
 
   function login(event) {
@@ -612,7 +646,58 @@ export default function AdminPage() {
           <div className="admin-panel admin-user-list-panel"><div className="admin-panel-head"><div><h2>管理员列表</h2><span>超级管理员可分配每个普通管理员的具体权限</span></div><button type="button" className="admin-primary admin-compact-action" onClick={openNewUserForm}>新增管理员</button></div><div className="admin-user-table">{users.map((user) => <article key={user.id}><div><strong>{user.name}</strong><span>{user.username} · {roleLabel(user.role)}</span></div><em className={`admin-status ${user.active ? "active" : "inactive"}`}>{user.active ? "启用" : "停用"}</em><span>{user.mustChangePassword ? "首次登录待改密" : "密码已设置"}</span><div className="admin-permission-tags">{permissionCatalog.filter(([key]) => mergePermissions(user)[key]).map(([key, label]) => <b key={key}>{label}</b>)}</div><div className="admin-row-actions"><button type="button" onClick={() => editUser(user)}>编辑</button><button type="button" disabled={user.id === currentUser.id} onClick={() => toggleUserActive(user.id)}>{user.active ? "停用" : "启用"}</button><button type="button" onClick={() => requirePasswordReset(user.id)}>要求改密</button></div></article>)}</div></div>
         </section> : null}
 
-        {tab === "settings" ? <section className="admin-panel"><div className="admin-panel-head"><h2>系统设置</h2><span>{power.settings ? "可编辑" : "当前账号无权编辑"}</span></div><div className="admin-form-grid"><label>店铺名称<input defaultValue="LPP 草帽店" disabled={!power.settings} /></label><label>订单前缀<input defaultValue="LPP" disabled={!power.settings} /></label><label>默认币种<select defaultValue="USD" disabled={!power.settings}><option>USD</option><option>CNY</option></select></label><label>库存预警<input type="number" defaultValue="20" disabled={!power.settings} /></label></div><button className="admin-primary" type="button" disabled={!power.settings}>保存设置</button></section> : null}
+        {tab === "settings" ? (
+          <form className="admin-panel" onSubmit={saveSettings}>
+            <div className="admin-panel-head">
+              <h2>系统设置</h2>
+              <span>{power.settings ? "可编辑，保存后刷新仍会保留" : "当前账号无权编辑"}</span>
+            </div>
+            <div className="admin-form-grid">
+              <label>
+                店铺名称
+                <input
+                  value={settings.storeName}
+                  onChange={(event) => updateSettings("storeName", event.target.value)}
+                  disabled={!power.settings}
+                  placeholder="例如 Oufan"
+                />
+                <small className="admin-field-hint">用于后台识别店铺，后续也可接到前台品牌名。</small>
+              </label>
+              <label>
+                订单前缀
+                <input
+                  value={settings.orderPrefix}
+                  onChange={(event) => updateSettings("orderPrefix", event.target.value)}
+                  disabled={!power.settings}
+                  placeholder="例如 OUFAN"
+                />
+              </label>
+              <label>
+                默认币种
+                <select
+                  value={settings.defaultCurrency}
+                  onChange={(event) => updateSettings("defaultCurrency", event.target.value)}
+                  disabled={!power.settings}
+                >
+                  <option value="USD">USD</option>
+                  <option value="CNY">CNY</option>
+                </select>
+              </label>
+              <label>
+                库存预警
+                <input
+                  type="number"
+                  min="0"
+                  value={settings.stockWarning}
+                  onChange={(event) => updateSettings("stockWarning", event.target.value)}
+                  disabled={!power.settings}
+                />
+              </label>
+            </div>
+            {settingsSaved ? <p className="admin-save-success">设置已保存</p> : null}
+            <button className="admin-primary" type="submit" disabled={!power.settings}>保存设置</button>
+          </form>
+        ) : null}
       </section>
     </main>
   );

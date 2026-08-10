@@ -2896,3 +2896,14 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+
+.admin-save-success {
+  margin: 0;
+  border: 1px solid #b7dd8b;
+  border-radius: 6px;
+  background: #f1f9e8;
+  color: #315a16;
+  padding: 10px 12px;
+  font-weight: 900;
+}
