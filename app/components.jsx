@@ -97,8 +97,8 @@ const translations = {
 };
 
 Object.assign(translations, {
-  "LPP 草帽店": "LPP Hat Shop",
-  "LPP 草帽店 Next.js 多页面电商展示站，支持人民币价格、收藏、对比、购物车和定制咨询演示。": "LPP Hat Shop is a multi-page Next.js ecommerce showcase with RMB pricing, wishlist, comparison, cart, and custom quote demos.",
+  "草帽品牌展示站": "Straw Hat Brand Showcase",
+  "草帽品牌展示站，支持多页面商品展示、人民币价格、收藏、对比、购物车和定制咨询演示。": "Straw Hat Brand Showcase is a multi-page product showcase with RMB pricing, wishlist, comparison, cart, and custom quote demos.",
   "轻便透气，适合旅行、度假和日常防晒。": "Lightweight and breathable for travel, holidays, and everyday sun protection.",
   "宽檐遮阳，户外工作和冲浪场景都稳。": "Wide-brim shade that works well for outdoor jobs and surf settings.",
   "美式海岸气质，适合团队和活动采购。": "American coastal energy for teams, events, and bulk purchasing.",
@@ -304,10 +304,10 @@ function applyDocumentLanguage(language) {
   const titleKey = document.title.trim();
   if (dictionary[titleKey]) {
     document.title = dictionary[titleKey];
-  } else if (language === "en" && titleKey.includes("LPP 草帽店")) {
-    document.title = titleKey.replace("LPP 草帽店", "LPP Hat Shop");
-  } else if (language !== "en" && titleKey.includes("LPP Hat Shop")) {
-    document.title = titleKey.replace("LPP Hat Shop", "LPP 草帽店");
+  } else if (language === "en" && titleKey.includes("草帽品牌展示站")) {
+    document.title = titleKey.replace("草帽品牌展示站", "Straw Hat Brand Showcase");
+  } else if (language !== "en" && titleKey.includes("Straw Hat Brand Showcase")) {
+    document.title = titleKey.replace("Straw Hat Brand Showcase", "草帽品牌展示站");
   }
 
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
