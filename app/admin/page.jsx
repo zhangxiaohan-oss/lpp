@@ -214,6 +214,20 @@ function normalizeProduct(product, index) {
   };
 }
 
+
+function mergeProducts(remoteProducts, localProducts) {
+  const merged = new Map();
+  [...remoteProducts, ...localProducts].forEach((product, index) => {
+    const key = product.slug || product.id || `product-${index}`;
+    merged.set(key, { ...(merged.get(key) || {}), ...product });
+  });
+  return Array.from(merged.values()).map((product, index) => normalizeProduct(product, index));
+}
+
+function productsChanged(previousProducts, nextProducts) {
+  return JSON.stringify(previousProducts) !== JSON.stringify(nextProducts);
+}
+
 function seedProducts() {
   return products.map((product, index) => normalizeProduct({
     ...product,
@@ -314,19 +328,23 @@ export default function AdminPage() {
     fetchRemoteProducts()
       .then((remoteProducts) => {
         if (ignoreRemoteProducts) return;
-        if (remoteProducts.length) {
-          const normalizedRemote = remoteProducts.map((product, index) => normalizeProduct(product, index));
-          setItems(normalizedRemote);
-          writeJson(PRODUCT_KEY, normalizedRemote, "lpp-admin-products-change");
-          setCloudStatus(`已同步云端商品：${normalizedRemote.length} 个`);
+        const normalizedRemote = remoteProducts.map((product, index) => normalizeProduct(product, index));
+        const mergedProducts = mergeProducts(normalizedRemote, initialProducts);
+
+        if (mergedProducts.length) {
+          setItems(mergedProducts);
+          writeJson(PRODUCT_KEY, mergedProducts, "lpp-admin-products-change");
+          const shouldUploadMerged = savedProducts.length && productsChanged(normalizedRemote, mergedProducts);
+          setCloudStatus(shouldUploadMerged ? "已恢复本机商品链接，正在同步到云端..." : `已同步云端商品：${mergedProducts.length} 个`);
+          if (shouldUploadMerged) {
+            pushRemoteProducts(mergedProducts)
+              .then(() => setCloudStatus(`已恢复并同步商品：${mergedProducts.length} 个`))
+              .catch((error) => setCloudStatus(error.message));
+          }
           return;
         }
-        setCloudStatus(savedProducts.length ? "云端暂无商品，正在上传本机后台商品..." : "云端暂无后台商品，新增或保存后会同步");
-        if (savedProducts.length) {
-          pushRemoteProducts(initialProducts)
-            .then(() => setCloudStatus(`已把本机后台商品同步到云端：${initialProducts.length} 个`))
-            .catch((error) => setCloudStatus(error.message));
-        }
+
+        setCloudStatus("云端暂无后台商品，新增或保存后会同步");
       })
       .catch((error) => setCloudStatus(error.message || "云端商品读取失败，本机缓存仍可用"));
 

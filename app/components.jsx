@@ -385,6 +385,16 @@ function addToCart(slug, qty = 1) {
   writeJson(STORAGE_KEYS.cart, cart);
 }
 
+
+function mergeManagedProducts(remoteProducts, localProducts) {
+  const merged = new Map();
+  [...remoteProducts, ...localProducts].forEach((product, index) => {
+    const key = product.slug || product.id || `managed-${index}`;
+    merged.set(key, { ...(merged.get(key) || {}), ...product });
+  });
+  return Array.from(merged.values());
+}
+
 function toggleListItem(key, slug) {
   const current = readJson(key, []);
   const next = current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug];
@@ -1182,8 +1192,9 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
     syncCatalog();
     readCloudProducts().then((cloudProducts) => {
       if (!cloudProducts.length) return;
-      writeJson(ADMIN_PRODUCTS_KEY, cloudProducts, "lpp-admin-products-change");
-      setCatalog(getClientProducts({ managedProducts: cloudProducts }));
+      const mergedProducts = mergeManagedProducts(cloudProducts, readJson(ADMIN_PRODUCTS_KEY, []));
+      writeJson(ADMIN_PRODUCTS_KEY, mergedProducts, "lpp-admin-products-change");
+      setCatalog(getClientProducts({ managedProducts: mergedProducts }));
     });
     window.addEventListener("lpp-admin-products-change", syncCatalog);
     window.addEventListener("storage", syncCatalog);
@@ -1541,8 +1552,9 @@ export function StorageCollectionView({ type, initialProductSlug, initialQuantit
     sync();
     readCloudProducts().then((cloudProducts) => {
       if (!cloudProducts.length) return;
-      writeJson(ADMIN_PRODUCTS_KEY, cloudProducts, "lpp-admin-products-change");
-      const catalog = getClientProducts({ includeInactive: true, managedProducts: cloudProducts });
+      const mergedProducts = mergeManagedProducts(cloudProducts, readJson(ADMIN_PRODUCTS_KEY, []));
+      writeJson(ADMIN_PRODUCTS_KEY, mergedProducts, "lpp-admin-products-change");
+      const catalog = getClientProducts({ includeInactive: true, managedProducts: mergedProducts });
       if (type === "cart") {
         const cart = readJson(key, {});
         setItems(
