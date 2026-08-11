@@ -20,6 +20,7 @@ const STORAGE_KEYS = {
 };
 
 const ADMIN_PRODUCTS_KEY = "lpp_admin_products";
+const SETTINGS_KEY = "lpp_admin_settings";
 const CURRENCY_KEY = "lpp_currency";
 const CURRENCY_EVENT = "lpp-currency-change";
 const LANGUAGE_KEY = "lpp_language";
@@ -369,6 +370,13 @@ async function readCloudProducts() {
   }
 }
 
+function getConfiguredSiteTitle(language = "zh-CN") {
+  const settings = readJson(SETTINGS_KEY, {});
+  const configuredName = String(settings.storeName || "").trim();
+  if (configuredName) return configuredName;
+  return language === "en" ? "Straw Hat Brand Showcase" : "???????";
+}
+
 function getCartCount() {
   const cart = readJson(STORAGE_KEYS.cart, {});
   return Object.values(cart).reduce((sum, item) => sum + Number(item.qty || 0), 0);
@@ -486,7 +494,14 @@ export function Header() {
 
   useEffect(() => {
     document.documentElement.lang = language === "en" ? "en" : "zh-CN";
-    window.requestAnimationFrame(() => applyDocumentLanguage(language));
+    const syncTitleAndLanguage = () => window.requestAnimationFrame(() => applyDocumentLanguage(language));
+    syncTitleAndLanguage();
+    window.addEventListener("storage", syncTitleAndLanguage);
+    window.addEventListener("lpp-admin-settings-change", syncTitleAndLanguage);
+    return () => {
+      window.removeEventListener("storage", syncTitleAndLanguage);
+      window.removeEventListener("lpp-admin-settings-change", syncTitleAndLanguage);
+    };
   }, [language]);
 
   useEffect(() => {
@@ -1207,7 +1222,7 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
   const visibleProducts = useMemo(() => {
     const searchText = search.trim().toLowerCase();
     const items = catalog.filter((product) => {
-      const haystack = [product.title, product.description, product.category, product.sku, product.tags.join(" ")].join(" ").toLowerCase();
+      const haystack = [product.title, product.description, product.category, product.sku, product.productLink, product.tags.join(" ")].join(" ").toLowerCase();
       const tags = product.tags.map((tag) => tag.toLowerCase());
       return (!searchText || haystack.includes(searchText)) && (filter === "all" || tags.includes(filter));
     });
@@ -1278,7 +1293,8 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
 export function ProductCard({ product }) {
   const [wished, setWished] = useState(false);
   const [compared, setCompared] = useState(false);
-  const detailHref = product.adminManaged ? `/shop?keywords=${encodeURIComponent(product.title)}` : productPath(product);
+  const detailHref = product.productLink || (product.adminManaged ? `/shop?keywords=${encodeURIComponent(product.title)}` : productPath(product));
+  const detailTarget = product.productLink && /^https?:\/\//i.test(product.productLink) ? "_blank" : undefined;
 
   useEffect(() => {
     setWished(readJson(STORAGE_KEYS.wishlist, []).includes(product.slug));
@@ -1301,7 +1317,7 @@ export function ProductCard({ product }) {
           <Rating rating={product.rating} count={product.reviewCount} />
         </div>
         <h3>
-          <a href={detailHref}>{product.title}</a>
+          <a href={detailHref} target={detailTarget} rel={detailTarget ? "noreferrer" : undefined}>{product.title}</a>
         </h3>
         <TagRow tags={product.tags.slice(0, 3)} />
         <div className="price">

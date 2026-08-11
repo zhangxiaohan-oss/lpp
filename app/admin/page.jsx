@@ -38,6 +38,11 @@ const defaultSettings = {
   stockWarning: 20
 };
 
+function syncDocumentTitle(storeName) {
+  if (typeof document === "undefined") return;
+  document.title = String(storeName || "").trim() || "???????";
+}
+
 const blankProduct = {
   title: "",
   slug: "",
@@ -46,6 +51,7 @@ const blankProduct = {
   category: "草帽",
   image: "/assets/product-01.jpg",
   gallery: ["/assets/product-01.jpg"],
+  productLink: "",
   tags: "custom, wholesale",
   status: "draft",
   description: "",
@@ -195,6 +201,8 @@ function normalizeProduct(product, index) {
   const slug = product.slug || title.toLowerCase().trim().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-").replace(/^-|-$/g, "") || `admin-product-${Date.now()}`;
   const tags = Array.isArray(product.tags) ? product.tags : String(product.tags || "").split(",").map((tag) => tag.trim()).filter(Boolean);
   const image = product.image || (Array.isArray(product.gallery) && product.gallery[0]) || "/assets/product-01.jpg";
+  const productLink = product.productLink || product.link || product.url || product.href || product.sourceUrl || product.detailUrl || product.purchaseUrl || "";
+  const description = product.description || product.summary || product.shortDescription || product.intro || "";
   return {
     ...product,
     id: product.id || `admin-${Date.now()}-${index}`,
@@ -204,6 +212,10 @@ function normalizeProduct(product, index) {
     price: product.price === "" || product.price === null || product.price === undefined ? null : Number(product.price),
     stock: Number(product.stock ?? 0),
     image,
+    productLink,
+    link: productLink,
+    url: productLink,
+    description,
     gallery: Array.isArray(product.gallery) && product.gallery.length ? product.gallery : [image],
     tags,
     status: product.status || "active",
@@ -317,7 +329,9 @@ export default function AdminPage() {
     }
 
     const savedSettings = readJson(SETTINGS_KEY, defaultSettings);
-    setSettings({ ...defaultSettings, ...savedSettings });
+    const initialSettings = { ...defaultSettings, ...savedSettings };
+    setSettings(initialSettings);
+    syncDocumentTitle(initialSettings.storeName);
 
     const savedProducts = readJson(PRODUCT_KEY, []);
     const initialProducts = savedProducts.length ? savedProducts.map((product, index) => normalizeProduct(product, index)) : seedProducts();
@@ -375,7 +389,7 @@ export default function AdminPage() {
   const visibleProducts = useMemo(() => {
     const text = query.trim().toLowerCase();
     if (!text) return items;
-    return items.filter((item) => [item.title, displaySku(item), item.category, item.status, item.tags?.join(" ")].join(" ").toLowerCase().includes(text));
+    return items.filter((item) => [item.title, displaySku(item), item.category, item.status, item.description, item.productLink, item.tags?.join(" ")].join(" ").toLowerCase().includes(text));
   }, [items, query]);
 
   function saveProducts(nextItems) {
@@ -403,6 +417,7 @@ export default function AdminPage() {
 
   function updateSettings(field, value) {
     setSettingsSaved(false);
+    if (field === "storeName") syncDocumentTitle(value);
     setSettings((current) => ({ ...current, [field]: value }));
   }
 
@@ -418,6 +433,7 @@ export default function AdminPage() {
     };
     setSettings(nextSettings);
     writeJson(SETTINGS_KEY, nextSettings, "lpp-admin-settings-change");
+    syncDocumentTitle(nextSettings.storeName);
     setSettingsSaved(true);
     window.setTimeout(() => setSettingsSaved(false), 2200);
   }
@@ -701,7 +717,7 @@ export default function AdminPage() {
             {!power.publish ? <p className="admin-note">当前账号不能发布，上架状态会自动保存为草稿。</p> : null}
             <button className="admin-primary" type="submit">{editingId ? "保存商品" : "新增商品"}</button>
           </form>
-          <div className="admin-panel"><div className="admin-panel-head"><h2>商品列表</h2><span className="admin-cloud-status">{cloudStatus}</span><input className="admin-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索商品、SKU、分类" /></div><div className="admin-product-table">{visibleProducts.map((product) => <article key={product.id}><img src={product.image} alt="" /><div><strong>{product.title}</strong><span>{product.sku} · {product.category} · 库存 {product.stock}</span></div><b>{money(product.price)}</b><em className={`admin-status ${product.status}`}>{product.status}</em><div className="admin-row-actions"><button type="button" onClick={() => editProduct(product)}>编辑</button><button type="button" disabled={!power.publish} onClick={() => setProductStatus(product, product.status === "active" ? "inactive" : "active")}>{product.status === "active" ? "下架" : "上架"}</button><button type="button" disabled={!power.remove} onClick={() => deleteProduct(product.id)}>删除</button></div></article>)}</div></div>
+          <div className="admin-panel"><div className="admin-panel-head"><h2>????</h2><span className="admin-cloud-status">{cloudStatus}</span><input className="admin-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="?????SKU?????????" /></div><div className="admin-product-table">{visibleProducts.map((product) => <article key={product.id}><img src={product.image} alt="" /><div className="admin-product-info"><strong>{product.title}</strong><span>{displaySku(product)} ? {product.category} ? ?? {product.stock}</span>{product.description ? <p>{product.description}</p> : null}{product.productLink ? <a href={product.productLink} target="_blank" rel="noreferrer">????</a> : <small>???????</small>}</div><b>{money(product.price)}</b><em className={`admin-status ${product.status}`}>{product.status}</em><div className="admin-row-actions"><button type="button" onClick={() => editProduct(product)}>??</button><button type="button" disabled={!power.publish} onClick={() => setProductStatus(product, product.status === "active" ? "inactive" : "active")}>{product.status === "active" ? "??" : "??"}</button><button type="button" disabled={!power.remove} onClick={() => deleteProduct(product.id)}>??</button></div></article>)}</div></div>
         </section> : null}
 
         {tab === "orders" ? <section className="admin-panel"><div className="admin-panel-head"><h2>订单列表</h2><span>前台提交订单后会出现在这里</span></div><div className="admin-order-list">{orders.map((order) => <article key={order.id}><img src={order.productImage} alt="" /><div className="admin-order-main"><div><strong>{order.id}</strong><span>{time(order.createdAt)} · {order.source}</span></div><h3>{order.productTitle}</h3><p>{order.customer.name} · {order.customer.phone || "未填电话"} · {order.customer.address || "未填地址"}</p><small>{order.notes || "无备注"}</small></div><div className="admin-order-side"><b>{money(order.total)}</b><em className={`admin-status ${order.status}`}>{order.status}</em><span>数量 {order.quantity}</span></div><div className="admin-row-actions"><button type="button" onClick={() => updateOrder(order.id, { status: "accepted", fulfillmentStatus: "processing" }, "管理员接单")}>接单</button><button type="button" onClick={() => updateOrder(order.id, { status: "shipped", fulfillmentStatus: "shipped" }, "订单发货")}>发货</button><button type="button" onClick={() => updateOrder(order.id, { status: "completed", fulfillmentStatus: "fulfilled" }, "订单完成")}>完成</button><button type="button" onClick={() => updateOrder(order.id, { status: "cancelled" }, "订单取消")}>取消</button><button type="button" onClick={() => updateOrder(order.id, { status: "refund", paymentStatus: "refund" }, "申请退款")}>退款</button></div></article>)}</div></section> : null}

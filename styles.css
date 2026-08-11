@@ -2914,3 +2914,6 @@ button {
   font-weight: 700;
   margin-right: auto;
 }
+
+
+.admin-product-info{display:grid;gap:4px;min-width:0}.admin-product-info p{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;margin:3px 0 0;color:#4b5547;font-size:12px;line-height:1.55}.admin-product-info a,.admin-product-info small{width:max-content;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--green-dark);font-size:12px;font-weight:900}.admin-product-info small{color:#9aa395}.admin-product-table article{grid-template-columns:62px minmax(0,1fr) minmax(74px,auto) minmax(72px,auto) auto}.admin-product-table .admin-status{justify-self:center}.admin-product-table b{white-space:nowrap}
