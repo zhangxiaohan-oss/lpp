@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { products } from "../data";
+import { categories, faqs, heroSlides, products, reviews, servicePromises } from "../data";
 
 const PRODUCT_KEY = "lpp_admin_products";
 const PRODUCT_SYNC_TOKEN_KEY = "lpp_admin_publish_token";
+const PAGE_CONTENT_KEY = "lpp_page_content";
+const PAGE_CONTENT_EVENT = "lpp-page-content-change";
+const PRODUCT_ORDER_KEY = "lpp_product_order";
 const ORDER_KEY = "lpp_admin_orders";
 const USER_KEY = "lpp_admin_users";
 const SETTINGS_KEY = "lpp_admin_settings";
@@ -38,9 +41,55 @@ const defaultSettings = {
   stockWarning: 20
 };
 
+function getDefaultPageContent() {
+  return {
+    heroSlides: heroSlides.map((slide) => ({ secondaryCta: "查看定制款", secondaryHref: "/shop?filter=custom", ...slide })),
+    servicePromises: servicePromises.map((item) => ({ ...item })),
+    categories: categories.map((item) => ({ ...item })),
+    reviews: reviews.map((item) => ({ ...item })),
+    faqs: faqs.map((item) => ({ ...item })),
+    featured: {
+      eyebrow: "精选商品",
+      title: "热卖草帽",
+      description: "从海滩到户外工作，挑一顶能遮阳、能出片、也能定制 Logo 的草帽。",
+      button: "查看全部商品",
+      href: "/shop"
+    },
+    newsletter: {
+      eyebrow: "展示与询价",
+      title: "准备好把草帽加入你的夏季货架了吗？",
+      description: "留下邮箱或直接前往定制页，告诉我们数量、Logo 方式和使用场景。",
+      button: "订阅更新",
+      contact: "联系我们",
+      href: "/contact"
+    },
+    footer: {
+      brandTitle: "草帽品牌展示站",
+      description: "面向海滩、冲浪、园艺、户外团队和品牌活动的草帽展示站，支持批发与 Logo 定制咨询。",
+      logos: ["COAST CLUB", "SURF LAB", "PALM DAY", "RGH", "KONA", "OUTDOOR CREW"]
+    }
+  };
+}
+
+function mergePageContent(saved = {}) {
+  const defaults = getDefaultPageContent();
+  return {
+    ...defaults,
+    ...saved,
+    heroSlides: Array.isArray(saved.heroSlides) && saved.heroSlides.length ? saved.heroSlides : defaults.heroSlides,
+    servicePromises: Array.isArray(saved.servicePromises) && saved.servicePromises.length ? saved.servicePromises : defaults.servicePromises,
+    categories: Array.isArray(saved.categories) && saved.categories.length ? saved.categories : defaults.categories,
+    reviews: Array.isArray(saved.reviews) && saved.reviews.length ? saved.reviews : defaults.reviews,
+    faqs: Array.isArray(saved.faqs) && saved.faqs.length ? saved.faqs : defaults.faqs,
+    featured: { ...defaults.featured, ...(saved.featured || {}) },
+    newsletter: { ...defaults.newsletter, ...(saved.newsletter || {}) },
+    footer: { ...defaults.footer, ...(saved.footer || {}) }
+  };
+}
+
 function syncDocumentTitle(storeName) {
   if (typeof document === "undefined") return;
-  document.title = String(storeName || "").trim() || "???????";
+  document.title = String(storeName || "").trim() || "草帽品牌展示站";
 }
 
 const blankProduct = {
@@ -91,6 +140,44 @@ async function fetchRemoteProducts() {
   const data = await response.json();
   return Array.isArray(data.products) ? data.products : [];
 }
+
+async function fetchRemoteContent() {
+  const response = await fetch("/api/admin/content", { cache: "no-store" });
+  if (!response.ok) throw new Error("页面装修读取失败");
+  const data = await response.json();
+  return data.content && typeof data.content === "object" ? data.content : {};
+}
+
+async function pushRemoteContent(content) {
+  let token = window.localStorage.getItem(PRODUCT_SYNC_TOKEN_KEY) || "";
+  let response = await fetch("/api/admin/content", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-token": token
+    },
+    body: JSON.stringify({ content })
+  });
+
+  if (response.status === 401) {
+    token = window.prompt("\u8bf7\u8f93\u5165\u540e\u53f0\u53d1\u5e03\u5bc6\u94a5\u3002\u8fd9\u4e2a\u5bc6\u94a5\u9700\u8981\u548c Netlify \u73af\u5883\u53d8\u91cf ADMIN_API_TOKEN \u4e00\u81f4\uff0c\u7528\u4e8e\u4fdd\u62a4\u7ebf\u4e0a\u9875\u9762\u88c5\u4fee\u3002") || "";
+    if (!token) throw new Error("\u7f3a\u5c11\u540e\u53f0\u53d1\u5e03\u5bc6\u94a5\uff0c\u9875\u9762\u88c5\u4fee\u53ea\u4fdd\u5b58\u5230\u672c\u673a\u6d4f\u89c8\u5668");
+    window.localStorage.setItem(PRODUCT_SYNC_TOKEN_KEY, token);
+    response = await fetch("/api/admin/content", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-token": token
+      },
+      body: JSON.stringify({ content })
+    });
+  }
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.ok === false) throw new Error(data.error || "云端页面装修保存失败");
+  return data;
+}
+
 
 async function pushRemoteProducts(products) {
   let token = window.localStorage.getItem(PRODUCT_SYNC_TOKEN_KEY) || "";
@@ -333,6 +420,21 @@ export default function AdminPage() {
     setSettings(initialSettings);
     syncDocumentTitle(initialSettings.storeName);
 
+    const savedContent = mergePageContent(readJson(PAGE_CONTENT_KEY, {}));
+    setPageContent(savedContent);
+    fetchRemoteContent()
+      .then((remoteContent) => {
+        if (!Object.keys(remoteContent).length) {
+          setContentStatus("云端暂无页面装修，保存后会同步");
+          return;
+        }
+        const mergedContent = mergePageContent({ ...savedContent, ...remoteContent });
+        setPageContent(mergedContent);
+        writeJson(PAGE_CONTENT_KEY, mergedContent, PAGE_CONTENT_EVENT);
+        setContentStatus("已同步云端页面装修");
+      })
+      .catch((error) => setContentStatus(error.message || "云端页面装修读取失败，本机缓存仍可用"));
+
     const savedProducts = readJson(PRODUCT_KEY, []);
     const initialProducts = savedProducts.length ? savedProducts.map((product, index) => normalizeProduct(product, index)) : seedProducts();
     setItems(initialProducts);
@@ -399,6 +501,69 @@ export default function AdminPage() {
     pushRemoteProducts(nextItems)
       .then(() => setCloudStatus(`已同步云端商品：${nextItems.length} 个`))
       .catch((error) => setCloudStatus(error.message));
+  }
+
+  function updatePageSection(section, field, value) {
+    setContentSaved(false);
+    setPageContent((current) => ({
+      ...current,
+      [section]: { ...(current[section] || {}), [field]: value }
+    }));
+  }
+
+  function updatePageList(section, index, field, value) {
+    setContentSaved(false);
+    setPageContent((current) => ({
+      ...current,
+      [section]: (current[section] || []).map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item)
+    }));
+  }
+
+  function addPageListItem(section, item) {
+    setContentSaved(false);
+    setPageContent((current) => ({ ...current, [section]: [...(current[section] || []), item] }));
+  }
+
+  function removePageListItem(section, index) {
+    setContentSaved(false);
+    setPageContent((current) => ({ ...current, [section]: (current[section] || []).filter((_, itemIndex) => itemIndex !== index) }));
+  }
+
+  async function chooseContentImage(section, index, event) {
+    const picked = await readImageFiles(event.target.files);
+    if (picked[0]) updatePageList(section, index, "image", picked[0].src);
+    event.target.value = "";
+  }
+
+  function savePageContent(event) {
+    event.preventDefault();
+    if (!power.settings) return;
+    const normalized = mergePageContent(pageContent);
+    setPageContent(normalized);
+    writeJson(PAGE_CONTENT_KEY, normalized, PAGE_CONTENT_EVENT);
+    setContentSaved(true);
+    setContentStatus("正在同步页面装修到云端...");
+    pushRemoteContent(normalized)
+      .then(() => setContentStatus("已同步云端页面装修"))
+      .catch((error) => setContentStatus(error.message));
+    window.setTimeout(() => setContentSaved(false), 2200);
+  }
+
+  function resetPageContent() {
+    if (!power.settings) return;
+    const defaults = getDefaultPageContent();
+    setPageContent(defaults);
+    writeJson(PAGE_CONTENT_KEY, defaults, PAGE_CONTENT_EVENT);
+    setContentStatus("已恢复默认页面装修，保存后会同步云端");
+  }
+
+  function moveProduct(productId, direction) {
+    const currentIndex = items.findIndex((item) => item.id === productId);
+    const nextIndex = currentIndex + direction;
+    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= items.length) return;
+    const nextItems = items.slice();
+    [nextItems[currentIndex], nextItems[nextIndex]] = [nextItems[nextIndex], nextItems[currentIndex]];
+    saveProducts(nextItems);
   }
 
   function saveOrders(nextOrders) {
@@ -650,7 +815,7 @@ export default function AdminPage() {
       <aside className="admin-sidebar">
         <a className="admin-brand" href="/"><span>LPP</span><strong>商户管理</strong></a>
         <nav className="admin-nav" aria-label="后台导航">
-          {[["overview", "总览", true], ["products", "商品上架", power.products], ["orders", "订单管理", power.orders], ["users", "权限", power.users], ["settings", "设置", power.settings]].map(([key, label, enabled]) => (
+          {[["overview", "总览", true], ["products", "商品上架", power.products], ["content", "页面装修", power.settings], ["orders", "订单管理", power.orders], ["users", "权限", power.users], ["settings", "设置", power.settings]].map(([key, label, enabled]) => (
             <button type="button" className={tab === key ? "is-active" : ""} key={key} disabled={!enabled} onClick={() => enabled && setTab(key)}>{label}</button>
           ))}
         </nav>
@@ -659,7 +824,7 @@ export default function AdminPage() {
 
       <section className="admin-main">
         <header className="admin-topbar">
-          <div><p className="admin-kicker">Dashboard</p><h1>{tab === "overview" ? "经营总览" : tab === "products" ? "商品上架与库存" : tab === "orders" ? "订单接收与处理" : tab === "users" ? "账号权限" : "后台设置"}</h1></div>
+          <div><p className="admin-kicker">Dashboard</p><h1>{tabTitle}</h1></div>
           <div className="admin-top-actions"><a href="/shop">查看购物网页</a><button type="button" onClick={logout}>退出</button></div>
         </header>
 
@@ -675,6 +840,131 @@ export default function AdminPage() {
             <div className="admin-panel"><div className="admin-panel-head"><h2>账号状态</h2><button type="button" disabled={!power.users} onClick={() => setTab("users")}>管理权限</button></div><div className="admin-stock-list">{users.map((user) => <div key={user.id}><span>{user.name} · {roleLabel(user.role)}</span><strong>{user.mustChangePassword ? "待改密" : user.active ? "启用" : "停用"}</strong></div>)}</div></div>
           </section>
         </> : null}
+
+
+        {tab === "content" ? (
+          <form className="admin-content-layout" onSubmit={savePageContent}>
+            <section className="admin-panel admin-content-panel">
+              <div className="admin-panel-head">
+                <div>
+                  <h2>页面装修</h2>
+                  <span>{contentStatus}</span>
+                </div>
+                <div className="admin-top-actions">
+                  <button type="button" onClick={resetPageContent} disabled={!power.settings}>恢复默认</button>
+                  <button className="admin-primary" type="submit" disabled={!power.settings}>{contentSaved ? "已保存" : "保存装修"}</button>
+                </div>
+              </div>
+
+              <div className="admin-editor-section">
+                <div className="admin-editor-heading"><h3>首页海报轮播</h3><span>图片、标题、按钮都可以替换；勾选“纯海报”时只展示整张图。</span></div>
+                <div className="admin-editor-stack">
+                  {pageContent.heroSlides.map((slide, index) => (
+                    <article className="admin-mini-editor" key={`hero-${index}`}>
+                      <img src={slide.image} alt="" />
+                      <div className="admin-form-grid">
+                        <label>???<input value={slide.eyebrow || ""} onChange={(event) => updatePageList("heroSlides", index, "eyebrow", event.target.value)} /></label>
+                        <label>???<input value={slide.title || ""} onChange={(event) => updatePageList("heroSlides", index, "title", event.target.value)} /></label>
+                        <label>?? URL<input value={slide.image?.startsWith("data:") ? "" : slide.image || ""} onChange={(event) => updatePageList("heroSlides", index, "image", event.target.value)} /></label>
+                        <label>按钮文案<input value={slide.cta || ""} onChange={(event) => updatePageList("heroSlides", index, "cta", event.target.value)} /></label>
+                        <label>按钮链接<input value={slide.href || ""} onChange={(event) => updatePageList("heroSlides", index, "href", event.target.value)} /></label>
+                        <label>副按钮文案<input value={slide.secondaryCta || ""} onChange={(event) => updatePageList("heroSlides", index, "secondaryCta", event.target.value)} /></label>
+                        <label>副按钮链接<input value={slide.secondaryHref || ""} onChange={(event) => updatePageList("heroSlides", index, "secondaryHref", event.target.value)} /></label>
+                        <label>展示方式<select value={slide.posterOnly ? "poster" : "copy"} onChange={(event) => updatePageList("heroSlides", index, "posterOnly", event.target.value === "poster")}><option value="copy">图片叠加文案</option><option value="poster">纯海报整图</option></select></label>
+                      </div>
+                      <label className="admin-wide-label">??<textarea value={slide.description || ""} onChange={(event) => updatePageList("heroSlides", index, "description", event.target.value)} /></label>
+                      <label className="admin-file-button">替换海报图<input type="file" accept="image/*" onChange={(event) => chooseContentImage("heroSlides", index, event)} /></label>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="admin-editor-section">
+                <div className="admin-editor-heading"><h3>服务承诺条</h3><span>对应首页海报下面的三个卖点卡片。</span></div>
+                <div className="admin-editor-grid three">
+                  {pageContent.servicePromises.map((item, index) => (
+                    <article className="admin-compact-editor" key={`promise-${index}`}>
+                      <label>英文标签<input value={item.kicker || ""} onChange={(event) => updatePageList("servicePromises", index, "kicker", event.target.value)} /></label>
+                      <label>??<input value={item.title || ""} onChange={(event) => updatePageList("servicePromises", index, "title", event.target.value)} /></label>
+                      <label>??<textarea value={item.description || ""} onChange={(event) => updatePageList("servicePromises", index, "description", event.target.value)} /></label>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="admin-editor-section">
+                <div className="admin-editor-heading"><h3>热门分类</h3><span>左侧分类大图和说明会同步到首页分类板块。</span></div>
+                <div className="admin-editor-grid two">
+                  {pageContent.categories.map((item, index) => (
+                    <article className="admin-mini-editor compact" key={`category-${index}`}>
+                      <img src={item.image} alt="" />
+                      <label>???<input value={item.label || ""} onChange={(event) => updatePageList("categories", index, "label", event.target.value)} /></label>
+                      <label>???<input value={item.filter || ""} onChange={(event) => updatePageList("categories", index, "filter", event.target.value)} /></label>
+                      <label>?? URL<input value={item.image?.startsWith("data:") ? "" : item.image || ""} onChange={(event) => updatePageList("categories", index, "image", event.target.value)} /></label>
+                      <label>??<textarea value={item.description || ""} onChange={(event) => updatePageList("categories", index, "description", event.target.value)} /></label>
+                      <label className="admin-file-button">替换分类图<input type="file" accept="image/*" onChange={(event) => chooseContentImage("categories", index, event)} /></label>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="admin-editor-section">
+                <div className="admin-editor-heading"><h3>精选商品区</h3><span>控制首页热卖商品区的标题、说明和入口按钮。</span></div>
+                <div className="admin-form-grid">
+                  <label>???<input value={pageContent.featured.eyebrow || ""} onChange={(event) => updatePageSection("featured", "eyebrow", event.target.value)} /></label>
+                  <label>??<input value={pageContent.featured.title || ""} onChange={(event) => updatePageSection("featured", "title", event.target.value)} /></label>
+                  <label>按钮文案<input value={pageContent.featured.button || ""} onChange={(event) => updatePageSection("featured", "button", event.target.value)} /></label>
+                  <label>按钮链接<input value={pageContent.featured.href || ""} onChange={(event) => updatePageSection("featured", "href", event.target.value)} /></label>
+                </div>
+                <label className="admin-wide-label">??<textarea value={pageContent.featured.description || ""} onChange={(event) => updatePageSection("featured", "description", event.target.value)} /></label>
+              </div>
+
+              <div className="admin-editor-section">
+                <div className="admin-editor-heading"><h3>评价滚动</h3><button type="button" onClick={() => addPageListItem("reviews", { rating: 5, text: "新的客户评价", name: "客户名称", location: "地区" })}>新增评价</button></div>
+                <div className="admin-editor-stack">
+                  {pageContent.reviews.map((item, index) => (
+                    <article className="admin-compact-editor" key={`review-${index}`}>
+                      <div className="admin-form-grid">
+                        <label>??<input value={item.name || ""} onChange={(event) => updatePageList("reviews", index, "name", event.target.value)} /></label>
+                        <label>??<input value={item.location || ""} onChange={(event) => updatePageList("reviews", index, "location", event.target.value)} /></label>
+                        <label>??<input type="number" min="1" max="5" step="0.1" value={item.rating || 5} onChange={(event) => updatePageList("reviews", index, "rating", Number(event.target.value))} /></label>
+                      </div>
+                      <label>??<textarea value={item.text || ""} onChange={(event) => updatePageList("reviews", index, "text", event.target.value)} /></label>
+                      <button type="button" onClick={() => removePageListItem("reviews", index)}>删除这条评价</button>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="admin-editor-section">
+                <div className="admin-editor-heading"><h3>FAQ 问答</h3><button type="button" onClick={() => addPageListItem("faqs", { question: "新的问题", answer: "这里填写回答" })}>新增 FAQ</button></div>
+                <div className="admin-editor-stack">
+                  {pageContent.faqs.map((item, index) => (
+                    <article className="admin-compact-editor" key={`faq-${index}`}>
+                      <label>??<input value={item.question || ""} onChange={(event) => updatePageList("faqs", index, "question", event.target.value)} /></label>
+                      <label>??<textarea value={item.answer || ""} onChange={(event) => updatePageList("faqs", index, "answer", event.target.value)} /></label>
+                      <button type="button" onClick={() => removePageListItem("faqs", index)}>删除这条 FAQ</button>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="admin-editor-section">
+                <div className="admin-editor-heading"><h3>订阅 CTA 与页脚</h3><span>页脚 Logo 每行一个，前台会自动排成 Logo 墙。</span></div>
+                <div className="admin-form-grid">
+                  <label>CTA ???<input value={pageContent.newsletter.eyebrow || ""} onChange={(event) => updatePageSection("newsletter", "eyebrow", event.target.value)} /></label>
+                  <label>CTA ??<input value={pageContent.newsletter.title || ""} onChange={(event) => updatePageSection("newsletter", "title", event.target.value)} /></label>
+                  <label>按钮文案<input value={pageContent.newsletter.button || ""} onChange={(event) => updatePageSection("newsletter", "button", event.target.value)} /></label>
+                  <label>联系我们<input value={pageContent.newsletter.contact || ""} onChange={(event) => updatePageSection("newsletter", "contact", event.target.value)} /></label>
+                  <label>页脚标题<input value={pageContent.footer.brandTitle || ""} onChange={(event) => updatePageSection("footer", "brandTitle", event.target.value)} /></label>
+                  <label>?? Logo<textarea value={(pageContent.footer.logos || []).join("\n")} onChange={(event) => updatePageSection("footer", "logos", event.target.value.split("\n").map((item) => item.trim()).filter(Boolean))} /></label>
+                </div>
+                <label className="admin-wide-label">CTA ??<textarea value={pageContent.newsletter.description || ""} onChange={(event) => updatePageSection("newsletter", "description", event.target.value)} /></label>
+                <label className="admin-wide-label">页脚说明<textarea value={pageContent.footer.description || ""} onChange={(event) => updatePageSection("footer", "description", event.target.value)} /></label>
+              </div>
+            </section>
+          </form>
+        ) : null}
 
         {tab === "products" ? <section className="admin-products-layout">
           <form className="admin-panel admin-product-form" onSubmit={submitProduct}>
@@ -717,7 +1007,40 @@ export default function AdminPage() {
             {!power.publish ? <p className="admin-note">当前账号不能发布，上架状态会自动保存为草稿。</p> : null}
             <button className="admin-primary" type="submit">{editingId ? "保存商品" : "新增商品"}</button>
           </form>
-          <div className="admin-panel"><div className="admin-panel-head"><h2>????</h2><span className="admin-cloud-status">{cloudStatus}</span><input className="admin-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="?????SKU?????????" /></div><div className="admin-product-table">{visibleProducts.map((product) => <article key={product.id}><img src={product.image} alt="" /><div className="admin-product-info"><strong>{product.title}</strong><span>{displaySku(product)} / {product.category} / ?? {product.stock}</span>{product.description ? <p>{product.description}</p> : null}{product.productLink ? <a href={product.productLink} target="_blank" rel="noreferrer">????</a> : <small>???????</small>}</div><b>{money(product.price)}</b><em className={`admin-status ${product.status}`}>{product.status}</em><div className="admin-row-actions"><button type="button" onClick={() => editProduct(product)}>??</button><button type="button" disabled={!power.publish} onClick={() => setProductStatus(product, product.status === "active" ? "inactive" : "active")}>{product.status === "active" ? "??" : "??"}</button><button type="button" disabled={!power.remove} onClick={() => deleteProduct(product.id)}>??</button></div></article>)}</div></div>
+          <div className="admin-panel">
+            <div className="admin-panel-head">
+              <div>
+                <h2>页面装修</h2>
+                <span className="admin-cloud-status">{cloudStatus}</span>
+              </div>
+              <input className="admin-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索商品、SKU、分类" />
+            </div>
+            <div className="admin-product-table">
+              {visibleProducts.map((product) => {
+                const originalIndex = items.findIndex((item) => item.id === product.id);
+                return (
+                  <article key={product.id}>
+                    <img src={product.image} alt="" />
+                    <div className="admin-product-info">
+                      <strong>{product.title}</strong>
+                      <span>{displaySku(product)} / {product.category} / ?? {product.stock}</span>
+                      {product.description ? <p>{product.description}</p> : null}
+                      {product.productLink ? <a href={product.productLink} target="_blank" rel="noreferrer">商品链接</a> : <small>未填写商品链接</small>}
+                    </div>
+                    <b>{money(product.price)}</b>
+                    <em className={`admin-status ${product.status}`}>{product.status}</em>
+                    <div className="admin-row-actions">
+                      <button type="button" disabled={originalIndex <= 0} onClick={() => moveProduct(product.id, -1)}>??</button>
+                      <button type="button" disabled={originalIndex < 0 || originalIndex >= items.length - 1} onClick={() => moveProduct(product.id, 1)}>??</button>
+                      <button type="button" onClick={() => editProduct(product)}>??</button>
+                      <button type="button" disabled={!power.publish} onClick={() => setProductStatus(product, product.status === "active" ? "inactive" : "active")}>{product.status === "active" ? "??" : "??"}</button>
+                      <button type="button" disabled={!power.remove} onClick={() => deleteProduct(product.id)}>??</button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
         </section> : null}
 
         {tab === "orders" ? <section className="admin-panel"><div className="admin-panel-head"><h2>订单列表</h2><span>前台提交订单后会出现在这里</span></div><div className="admin-order-list">{orders.map((order) => <article key={order.id}><img src={order.productImage} alt="" /><div className="admin-order-main"><div><strong>{order.id}</strong><span>{time(order.createdAt)} · {order.source}</span></div><h3>{order.productTitle}</h3><p>{order.customer.name} · {order.customer.phone || "未填电话"} · {order.customer.address || "未填地址"}</p><small>{order.notes || "无备注"}</small></div><div className="admin-order-side"><b>{money(order.total)}</b><em className={`admin-status ${order.status}`}>{order.status}</em><span>数量 {order.quantity}</span></div><div className="admin-row-actions"><button type="button" onClick={() => updateOrder(order.id, { status: "accepted", fulfillmentStatus: "processing" }, "管理员接单")}>接单</button><button type="button" onClick={() => updateOrder(order.id, { status: "shipped", fulfillmentStatus: "shipped" }, "订单发货")}>发货</button><button type="button" onClick={() => updateOrder(order.id, { status: "completed", fulfillmentStatus: "fulfilled" }, "订单完成")}>完成</button><button type="button" onClick={() => updateOrder(order.id, { status: "cancelled" }, "订单取消")}>取消</button><button type="button" onClick={() => updateOrder(order.id, { status: "refund", paymentStatus: "refund" }, "申请退款")}>退款</button></div></article>)}</div></section> : null}

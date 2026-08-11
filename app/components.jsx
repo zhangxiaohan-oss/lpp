@@ -5,6 +5,7 @@ import { Price } from "./currency";
 import {
   categories,
   faqs,
+  heroSlides,
   navItems,
   productPath,
   products,
@@ -20,6 +21,9 @@ const STORAGE_KEYS = {
 };
 
 const ADMIN_PRODUCTS_KEY = "lpp_admin_products";
+const PAGE_CONTENT_KEY = "lpp_page_content";
+const PAGE_CONTENT_EVENT = "lpp-page-content-change";
+const PRODUCT_ORDER_KEY = "lpp_product_order";
 const SETTINGS_KEY = "lpp_admin_settings";
 const CURRENCY_KEY = "lpp_currency";
 const CURRENCY_EVENT = "lpp-currency-change";
@@ -359,6 +363,93 @@ function writeJson(key, value, eventName = "lpp-store-change") {
   window.dispatchEvent(new Event(eventName));
 }
 
+function getDefaultPageContent() {
+  return {
+    heroSlides: heroSlides.map((slide) => ({
+      secondaryCta: "查看定制款",
+      secondaryHref: "/shop?filter=custom",
+      ...slide
+    })),
+    servicePromises: servicePromises.map((item) => ({ ...item })),
+    categories: categories.map((item) => ({ ...item })),
+    reviews: reviews.map((item) => ({ ...item })),
+    faqs: faqs.map((item) => ({ ...item })),
+    featured: {
+      eyebrow: "精选商品",
+      title: "热卖草帽",
+      description: "从海滩到户外工作，挑一顶能遮阳、能出片、也能定制 Logo 的草帽。",
+      button: "查看全部商品",
+      href: "/shop"
+    },
+    newsletter: {
+      eyebrow: "展示与询价",
+      title: "准备好把草帽加入你的夏季货架了吗？",
+      description: "留下邮箱或直接前往定制页，告诉我们数量、Logo 方式和使用场景。",
+      button: "订阅更新",
+      contact: "联系我们",
+      href: "/contact"
+    },
+    footer: {
+      brandTitle: "草帽品牌展示站",
+      description: "面向海滩、冲浪、园艺、户外团队和品牌活动的草帽展示站，支持批发与 Logo 定制咨询。",
+      logos: ["COAST CLUB", "SURF LAB", "PALM DAY", "RGH", "KONA", "OUTDOOR CREW"]
+    }
+  };
+}
+
+function mergePageContent(saved = {}) {
+  const defaults = getDefaultPageContent();
+  return {
+    ...defaults,
+    ...saved,
+    heroSlides: Array.isArray(saved.heroSlides) && saved.heroSlides.length ? saved.heroSlides : defaults.heroSlides,
+    servicePromises: Array.isArray(saved.servicePromises) && saved.servicePromises.length ? saved.servicePromises : defaults.servicePromises,
+    categories: Array.isArray(saved.categories) && saved.categories.length ? saved.categories : defaults.categories,
+    reviews: Array.isArray(saved.reviews) && saved.reviews.length ? saved.reviews : defaults.reviews,
+    faqs: Array.isArray(saved.faqs) && saved.faqs.length ? saved.faqs : defaults.faqs,
+    featured: { ...defaults.featured, ...(saved.featured || {}) },
+    newsletter: { ...defaults.newsletter, ...(saved.newsletter || {}) },
+    footer: { ...defaults.footer, ...(saved.footer || {}) }
+  };
+}
+
+function getPageContent() {
+  return mergePageContent(readJson(PAGE_CONTENT_KEY, {}));
+}
+
+async function readCloudContent() {
+  try {
+    const response = await fetch("/api/admin/content", { cache: "no-store" });
+    if (!response.ok) return {};
+    const data = await response.json();
+    return data.content && typeof data.content === "object" ? data.content : {};
+  } catch {
+    return {};
+  }
+}
+
+function usePageContent() {
+  const [content, setContent] = useState(getDefaultPageContent);
+
+  useEffect(() => {
+    const sync = () => setContent(getPageContent());
+    sync();
+    readCloudContent().then((cloudContent) => {
+      if (!Object.keys(cloudContent).length) return;
+      writeJson(PAGE_CONTENT_KEY, cloudContent, PAGE_CONTENT_EVENT);
+      setContent(mergePageContent(cloudContent));
+    });
+    window.addEventListener(PAGE_CONTENT_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(PAGE_CONTENT_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  return content;
+}
+
 async function readCloudProducts() {
   try {
     const response = await fetch("/api/admin/products", { cache: "no-store" });
@@ -374,7 +465,7 @@ function getConfiguredSiteTitle(language = "zh-CN") {
   const settings = readJson(SETTINGS_KEY, {});
   const configuredName = String(settings.storeName || "").trim();
   if (configuredName) return configuredName;
-  return language === "en" ? "Straw Hat Brand Showcase" : "???????";
+  return language === "en" ? "Straw Hat Brand Showcase" : "草帽品牌展示站";
 }
 
 function getCartCount() {
@@ -423,7 +514,17 @@ function getClientProducts({ includeInactive = false, managedProducts = readJson
     });
   }
 
-  return Array.from(merged.values())
+  const productOrder = readJson(PRODUCT_ORDER_KEY, []);
+  const orderIndex = new Map(productOrder.map((key, index) => [String(key), index]));
+  const arranged = Array.from(merged.values()).sort((a, b) => {
+    const leftKey = String(a.slug || a.id || "");
+    const rightKey = String(b.slug || b.id || "");
+    const left = orderIndex.has(leftKey) ? orderIndex.get(leftKey) : Number.MAX_SAFE_INTEGER;
+    const right = orderIndex.has(rightKey) ? orderIndex.get(rightKey) : Number.MAX_SAFE_INTEGER;
+    return left - right;
+  });
+
+  return arranged
     .filter((product) => includeInactive || (product.status || "active") === "active")
     .map((product, index) => {
       const image = product.image || "/assets/product-01.jpg";
@@ -1033,52 +1134,54 @@ function SupportChatPanel({ open, initialChannel = "whatsapp", onClose, language
 }
 
 export function Footer() {
+  const content = usePageContent();
+  const footer = content.footer;
+  const footerLogos = Array.isArray(footer.logos) ? footer.logos.filter(Boolean) : [];
+
   return (
     <footer className="site-footer">
       <div>
         <a className="footer-showcase-brand" href="/" aria-label="Oufan 草帽品牌展示站">
           <img src="/assets/oufan-logo.jpg" alt="Oufan 草帽品牌标志" />
-          <strong>草帽品牌展示站</strong>
+          <strong>{footer.brandTitle}</strong>
         </a>
-        <p>面向海滩、冲浪、园艺、户外团队和品牌活动的草帽展示站，支持批发与 Logo 定制咨询。</p>
+        <p>{footer.description}</p>
         <div className="footer-logo-wall" aria-label="示例品牌 Logo 展示">
-          <span>COAST CLUB</span>
-          <span>SURF LAB</span>
-          <span>PALM DAY</span>
-          <span>RGH</span>
-          <span>KONA</span>
-          <span>OUTDOOR CREW</span>
+          {footerLogos.map((logo) => <span key={logo}>{logo}</span>)}
         </div>
       </div>
       <div className="footer-links">
-        <a href="/shop">商店</a>
-        <a href="/customize">定制服务</a>
+        <a href="/shop">??</a>
+        <a href="/customize">订单追踪</a>
         <a href="/tracking">订单追踪</a>
-        <a href="/contact">联系我们</a>
+        <a href="/contact">订单追踪</a>
       </div>
       <div className="footer-links">
-        <a href="/wishlist">收藏夹</a>
-        <a href="/compare">商品对比</a>
-        <a href="/cart">购物车</a>
-        <a href="/checkout">结账演示</a>
+        <a href="/wishlist">???</a>
+        <a href="/compare">订单追踪</a>
+        <a href="/cart">???</a>
+        <a href="/checkout">订单追踪</a>
       </div>
     </footer>
   );
 }
 
 export function HeroSlider({ slides }) {
+  const content = usePageContent();
+  const currentSlides = content.heroSlides?.length ? content.heroSlides : slides;
   const [active, setActive] = useState(0);
 
   useEffect(() => {
-    if (!slides?.length) return undefined;
+    if (!currentSlides?.length) return undefined;
+    setActive((current) => Math.min(current, currentSlides.length - 1));
     const timer = window.setInterval(() => {
-      setActive((current) => (current + 1) % slides.length);
+      setActive((current) => (current + 1) % currentSlides.length);
     }, 5600);
     return () => window.clearInterval(timer);
-  }, [slides]);
+  }, [currentSlides]);
 
-  if (!slides?.length) return null;
-  const slide = slides[active];
+  if (!currentSlides?.length) return null;
+  const slide = currentSlides[active];
 
   return (
     <section id="home" className={"hero" + (slide.posterOnly ? " hero-poster-only" : "")}>
@@ -1091,21 +1194,21 @@ export function HeroSlider({ slides }) {
           <h1>{slide.title}</h1>
           <p>{slide.description}</p>
           <div className="hero-actions">
-            <a className="button button-primary" href={slide.href}>
-              {slide.cta}
+            <a className="button button-primary" href={slide.href || "/shop"}>
+              {slide.cta || "立即选购"}
             </a>
-            <a className="button button-light" href="/shop?filter=custom">
-              查看定制款
+            <a className="button button-light" href={slide.secondaryHref || "/shop?filter=custom"}>
+              {slide.secondaryCta || "查看定制款"}
             </a>
           </div>
         </div>
       ) : null}
-      {slides.length > 1 ? (
+      {currentSlides.length > 1 ? (
         <div className="hero-dots" aria-label="切换海报">
-          {slides.map((item, index) => (
+          {currentSlides.map((item, index) => (
             <button
               type="button"
-              key={item.title}
+              key={`${item.title}-${index}`}
               className={index === active ? "is-active" : ""}
               aria-label={`切换到第 ${index + 1} 张海报`}
               onClick={() => setActive(index)}
@@ -1118,10 +1221,11 @@ export function HeroSlider({ slides }) {
 }
 
 export function ServicePromises() {
+  const content = usePageContent();
   return (
     <section className="service-strip" aria-label="商店服务">
-      {servicePromises.map((item, index) => (
-        <article key={item.title}>
+      {content.servicePromises.map((item, index) => (
+        <article key={`${item.title}-${index}`}>
           <div className="service-index">
             <span>{String(index + 1).padStart(2, "0")}</span>
           </div>
@@ -1137,6 +1241,8 @@ export function ServicePromises() {
 }
 
 export function CategoryShowcase() {
+  const content = usePageContent();
+  const catalog = getClientProducts();
   const categoryProducts = {
     beach: ["wholesale-custom-logo-surfing-beach-straw-hats", "unisex-beach-lifeguard-straw-hat", "custom-panama-beach-lifeguard-hat", "wholesale-american-beach-straw-hat", "fashion-custom-logo-beach-straw-hat", "plain-wide-brim-sun-hat"],
     lifeguard: ["american-style-lifeguard-straw-hats", "natural-straw-lifeguard-logo-print-hat", "custom-logo-patch-lifeguard-straw-hat", "applique-embroidered-logo-lifeguard-hat", "wide-brim-summer-fishing-straw-hat", "upf50-american-flag-surfing-hat"],
@@ -1151,7 +1257,7 @@ export function CategoryShowcase() {
         <h2>热门分类</h2>
       </div>
       <div className="category-feature-list">
-        {categories.map((category) => (
+        {content.categories.map((category) => (
           <article className="category-feature-row" key={category.filter}>
             <a className="category-feature-hero" href={`/shop?filter=${category.filter}`}>
               <img src={category.image} alt={category.label} />
@@ -1161,12 +1267,12 @@ export function CategoryShowcase() {
             </a>
             <div className="category-feature-products">
               <div className="category-feature-heading">
-                <h3>{category.label}精选</h3>
-                <a href={`/shop?filter=${category.filter}`}>查看全部</a>
+                <h3>{category.label}??</h3>
+                <a href={`/shop?filter=${category.filter}`}>订单追踪</a>
               </div>
               <div className="category-mini-grid">
                 {(categoryProducts[category.filter] || [])
-                  .map((slug) => products.find((product) => product.slug === slug))
+                  .map((slug) => catalog.find((product) => product.slug === slug))
                   .filter(Boolean)
                   .map((product) => (
                     <a className="category-mini-card" href={productPath(product)} key={product.slug}>
@@ -1182,6 +1288,27 @@ export function CategoryShowcase() {
           </article>
         ))}
       </div>
+    </section>
+  );
+}
+
+export function FeaturedProductsSection() {
+  const content = usePageContent();
+  const featured = content.featured;
+
+  return (
+    <section className="shop-section">
+      <div className="section-heading section-heading-row">
+        <div>
+          <p className="eyebrow">{featured.eyebrow}</p>
+          <h2>{featured.title}</h2>
+          <p>{featured.description}</p>
+        </div>
+        <a className="button button-ghost" href={featured.href || "/shop"}>
+          {featured.button}
+        </a>
+      </div>
+      <ProductGrid limit={8} showTools={false} />
     </section>
   );
 }
@@ -1255,37 +1382,39 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
             />
           </label>
           <label>
-            <span>筛选</span>
+            <span>??</span>
             <select value={filter} onChange={(event) => setFilter(event.target.value)}>
               <option value="all">全部商品</option>
-              <option value="custom">Logo 定制</option>
+              <option value="custom">Logo ??</option>
               <option value="lifeguard">救生员帽</option>
-              <option value="beach">海滩帽</option>
+              <option value="beach">???</option>
               <option value="surf">冲浪与海滩</option>
               <option value="wholesale">批发采购</option>
               <option value="fishing">钓鱼户外</option>
             </select>
           </label>
           <label>
-            <span>排序</span>
+            <span>??</span>
             <select value={sort} onChange={(event) => setSort(event.target.value)}>
               <option value="featured">推荐排序</option>
               <option value="rating">评分优先</option>
               <option value="price-asc">价格从低到高</option>
               <option value="price-desc">价格从高到低</option>
-              <option value="name">名称 A-Z</option>
+              <option value="name">?? A-Z</option>
             </select>
           </label>
         </div>
       ) : null}
 
-      <div className="product-grid" aria-live="polite">
-        {visibleProducts.length ? (
-          visibleProducts.map((product) => <ProductCard product={product} key={product.id} />)
-        ) : (
-          <div className="panel-empty">没有找到符合条件的商品。</div>
-        )}
-      </div>
+      {visibleProducts.length ? (
+        <div className="product-grid">
+          {visibleProducts.map((product) => (
+            <ProductCard product={product} key={product.slug} />
+          ))}
+        </div>
+      ) : (
+        <div className="panel-empty">没有找到符合条件的商品。</div>
+      )}
     </>
   );
 }
@@ -1473,7 +1602,8 @@ export function ProductDetailView({ product, relatedProducts = [] }) {
 }
 
 export function ReviewsMarquee() {
-  const reviewItems = [...reviews, ...reviews];
+  const content = usePageContent();
+  const reviewItems = [...content.reviews, ...content.reviews];
   return (
     <section className="testimonials">
       <div className="section-heading">
@@ -1497,6 +1627,7 @@ export function ReviewsMarquee() {
 }
 
 export function FaqSection() {
+  const content = usePageContent();
   return (
     <section className="faq-section">
       <div className="section-heading">
@@ -1504,8 +1635,8 @@ export function FaqSection() {
         <h2>购买前先了解</h2>
       </div>
       <div className="faq-list">
-        {faqs.map((item, index) => (
-          <details key={item.question} open={index === 0}>
+        {content.faqs.map((item, index) => (
+          <details key={`${item.question}-${index}`} open={index === 0}>
             <summary>{item.question}</summary>
             <p>{item.answer}</p>
           </details>
@@ -1516,21 +1647,23 @@ export function FaqSection() {
 }
 
 export function NewsletterCta() {
+  const content = usePageContent();
+  const newsletter = content.newsletter;
   return (
     <section className="newsletter-cta">
       <div>
-        <p className="eyebrow">展示与询价</p>
-        <h2>准备好把草帽加入你的夏季货架了吗？</h2>
-        <p>留下邮箱或直接前往定制页，告诉我们数量、Logo 方式和使用场景。</p>
+        <p className="eyebrow">{newsletter.eyebrow}</p>
+        <h2>{newsletter.title}</h2>
+        <p>{newsletter.description}</p>
       </div>
       <form onSubmit={(event) => event.preventDefault()}>
-        <input type="email" placeholder="you@example.com" aria-label="邮箱" />
+        <input type="email" placeholder="you@example.com" aria-label="??" />
         <button className="button button-primary" type="submit">
-          订阅更新
+          {newsletter.button}
         </button>
       </form>
-      <a className="button button-ghost" href="/contact">
-        联系我们
+      <a className="button button-ghost" href={newsletter.href || "/contact"}>
+        {newsletter.contact}
       </a>
     </section>
   );
