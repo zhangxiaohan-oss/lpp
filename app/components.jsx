@@ -359,7 +359,11 @@ function readJson(key, fallback) {
 }
 
 function writeJson(key, value, eventName = "lpp-store-change") {
-  window.localStorage.setItem(key, JSON.stringify(value));
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Large admin images can exceed browser storage. Keep rendering with in-memory data.
+  }
   window.dispatchEvent(new Event(eventName));
 }
 
@@ -397,19 +401,31 @@ function getDefaultPageContent() {
   };
 }
 
+function asObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+
+function mergeList(savedList, defaultList) {
+  if (!Array.isArray(savedList) || !savedList.length) return defaultList;
+  return savedList
+    .map((item, index) => ({ ...(defaultList[index] || {}), ...asObject(item) }))
+    .filter((item) => Object.keys(item).length);
+}
+
 function mergePageContent(saved = {}) {
+  const source = asObject(saved);
   const defaults = getDefaultPageContent();
   return {
     ...defaults,
-    ...saved,
-    heroSlides: Array.isArray(saved.heroSlides) && saved.heroSlides.length ? saved.heroSlides : defaults.heroSlides,
-    servicePromises: Array.isArray(saved.servicePromises) && saved.servicePromises.length ? saved.servicePromises : defaults.servicePromises,
-    categories: Array.isArray(saved.categories) && saved.categories.length ? saved.categories : defaults.categories,
-    reviews: Array.isArray(saved.reviews) && saved.reviews.length ? saved.reviews : defaults.reviews,
-    faqs: Array.isArray(saved.faqs) && saved.faqs.length ? saved.faqs : defaults.faqs,
-    featured: { ...defaults.featured, ...(saved.featured || {}) },
-    newsletter: { ...defaults.newsletter, ...(saved.newsletter || {}) },
-    footer: { ...defaults.footer, ...(saved.footer || {}) }
+    ...source,
+    heroSlides: mergeList(source.heroSlides, defaults.heroSlides),
+    servicePromises: mergeList(source.servicePromises, defaults.servicePromises),
+    categories: mergeList(source.categories, defaults.categories),
+    reviews: mergeList(source.reviews, defaults.reviews),
+    faqs: mergeList(source.faqs, defaults.faqs),
+    featured: { ...defaults.featured, ...asObject(source.featured) },
+    newsletter: { ...defaults.newsletter, ...asObject(source.newsletter) },
+    footer: { ...defaults.footer, ...asObject(source.footer) }
   };
 }
 
@@ -1135,7 +1151,7 @@ function SupportChatPanel({ open, initialChannel = "whatsapp", onClose, language
 
 export function Footer() {
   const content = usePageContent();
-  const footer = content.footer;
+  const footer = content.footer || getDefaultPageContent().footer;
   const footerLogos = Array.isArray(footer.logos) ? footer.logos.filter(Boolean) : [];
 
   return (
@@ -1168,7 +1184,7 @@ export function Footer() {
 
 export function HeroSlider({ slides }) {
   const content = usePageContent();
-  const currentSlides = content.heroSlides?.length ? content.heroSlides : slides;
+  const currentSlides = Array.isArray(content.heroSlides) && content.heroSlides.length ? content.heroSlides.filter(Boolean) : slides;
   const [active, setActive] = useState(0);
 
   useEffect(() => {
@@ -1181,7 +1197,7 @@ export function HeroSlider({ slides }) {
   }, [currentSlides]);
 
   if (!currentSlides?.length) return null;
-  const slide = currentSlides[active];
+  const slide = currentSlides[active] || currentSlides[0];
 
   return (
     <section id="home" className={"hero" + (slide.posterOnly ? " hero-poster-only" : "")}>
@@ -1224,7 +1240,7 @@ export function ServicePromises() {
   const content = usePageContent();
   return (
     <section className="service-strip" aria-label="商店服务">
-      {content.servicePromises.map((item, index) => (
+      {(Array.isArray(content.servicePromises) ? content.servicePromises : []).filter(Boolean).map((item, index) => (
         <article key={`${item.title}-${index}`}>
           <div className="service-index">
             <span>{String(index + 1).padStart(2, "0")}</span>
@@ -1257,7 +1273,7 @@ export function CategoryShowcase() {
         <h2>热门分类</h2>
       </div>
       <div className="category-feature-list">
-        {content.categories.map((category) => (
+        {(Array.isArray(content.categories) ? content.categories : []).filter(Boolean).map((category) => (
           <article className="category-feature-row" key={category.filter}>
             <a className="category-feature-hero" href={`/shop?filter=${category.filter}`}>
               <img src={category.image} alt={category.label} />
@@ -1294,7 +1310,7 @@ export function CategoryShowcase() {
 
 export function FeaturedProductsSection() {
   const content = usePageContent();
-  const featured = content.featured;
+  const featured = content.featured || getDefaultPageContent().featured;
 
   return (
     <section className="shop-section">
@@ -1349,8 +1365,9 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
   const visibleProducts = useMemo(() => {
     const searchText = search.trim().toLowerCase();
     const items = catalog.filter((product) => {
-      const haystack = [product.title, product.description, product.category, product.sku, product.productLink, product.tags.join(" ")].join(" ").toLowerCase();
-      const tags = product.tags.map((tag) => tag.toLowerCase());
+      const productTags = Array.isArray(product.tags) ? product.tags : [];
+      const haystack = [product.title, product.description, product.category, product.sku, product.productLink, productTags.join(" ")].join(" ").toLowerCase();
+      const tags = productTags.map((tag) => String(tag).toLowerCase());
       return (!searchText || haystack.includes(searchText)) && (filter === "all" || tags.includes(filter));
     });
 
@@ -1448,7 +1465,7 @@ export function ProductCard({ product }) {
         <h3>
           <a href={detailHref} target={detailTarget} rel={detailTarget ? "noreferrer" : undefined}>{product.title}</a>
         </h3>
-        <TagRow tags={product.tags.slice(0, 3)} />
+        <TagRow tags={(Array.isArray(product.tags) ? product.tags : []).slice(0, 3)} />
         <div className="price">
           <Price price={product.price} priceLabel={product.priceLabel} />
         </div>
@@ -1525,7 +1542,7 @@ export function ProductDetailView({ product, relatedProducts = [] }) {
             <Price price={product.price} priceLabel={product.priceLabel} />
           </div>
           <p>{product.description}</p>
-          <TagRow tags={product.tags} />
+          <TagRow tags={Array.isArray(product.tags) ? product.tags : []} />
           <div className="quantity-row">
             <span>数量</span>
             <button type="button" onClick={() => setQty((current) => Math.max(1, current - 1))}>
@@ -1603,7 +1620,8 @@ export function ProductDetailView({ product, relatedProducts = [] }) {
 
 export function ReviewsMarquee() {
   const content = usePageContent();
-  const reviewItems = [...content.reviews, ...content.reviews];
+  const reviewsList = Array.isArray(content.reviews) ? content.reviews.filter(Boolean) : [];
+  const reviewItems = [...reviewsList, ...reviewsList];
   return (
     <section className="testimonials">
       <div className="section-heading">
@@ -1635,7 +1653,7 @@ export function FaqSection() {
         <h2>购买前先了解</h2>
       </div>
       <div className="faq-list">
-        {content.faqs.map((item, index) => (
+        {(Array.isArray(content.faqs) ? content.faqs : []).filter(Boolean).map((item, index) => (
           <details key={`${item.question}-${index}`} open={index === 0}>
             <summary>{item.question}</summary>
             <p>{item.answer}</p>
@@ -1648,7 +1666,7 @@ export function FaqSection() {
 
 export function NewsletterCta() {
   const content = usePageContent();
-  const newsletter = content.newsletter;
+  const newsletter = content.newsletter || getDefaultPageContent().newsletter;
   return (
     <section className="newsletter-cta">
       <div>

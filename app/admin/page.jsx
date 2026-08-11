@@ -71,19 +71,31 @@ function getDefaultPageContent() {
   };
 }
 
+function asObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+
+function mergeList(savedList, defaultList) {
+  if (!Array.isArray(savedList) || !savedList.length) return defaultList;
+  return savedList
+    .map((item, index) => ({ ...(defaultList[index] || {}), ...asObject(item) }))
+    .filter((item) => Object.keys(item).length);
+}
+
 function mergePageContent(saved = {}) {
+  const source = asObject(saved);
   const defaults = getDefaultPageContent();
   return {
     ...defaults,
-    ...saved,
-    heroSlides: Array.isArray(saved.heroSlides) && saved.heroSlides.length ? saved.heroSlides : defaults.heroSlides,
-    servicePromises: Array.isArray(saved.servicePromises) && saved.servicePromises.length ? saved.servicePromises : defaults.servicePromises,
-    categories: Array.isArray(saved.categories) && saved.categories.length ? saved.categories : defaults.categories,
-    reviews: Array.isArray(saved.reviews) && saved.reviews.length ? saved.reviews : defaults.reviews,
-    faqs: Array.isArray(saved.faqs) && saved.faqs.length ? saved.faqs : defaults.faqs,
-    featured: { ...defaults.featured, ...(saved.featured || {}) },
-    newsletter: { ...defaults.newsletter, ...(saved.newsletter || {}) },
-    footer: { ...defaults.footer, ...(saved.footer || {}) }
+    ...source,
+    heroSlides: mergeList(source.heroSlides, defaults.heroSlides),
+    servicePromises: mergeList(source.servicePromises, defaults.servicePromises),
+    categories: mergeList(source.categories, defaults.categories),
+    reviews: mergeList(source.reviews, defaults.reviews),
+    faqs: mergeList(source.faqs, defaults.faqs),
+    featured: { ...defaults.featured, ...asObject(source.featured) },
+    newsletter: { ...defaults.newsletter, ...asObject(source.newsletter) },
+    footer: { ...defaults.footer, ...asObject(source.footer) }
   };
 }
 
@@ -131,7 +143,11 @@ function readJson(key, fallback) {
 }
 
 function writeJson(key, value, eventName) {
-  window.localStorage.setItem(key, JSON.stringify(value));
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Large uploaded images can exceed browser storage. Cloud sync still keeps the data.
+  }
   if (eventName) window.dispatchEvent(new Event(eventName));
 }
 async function fetchRemoteProducts() {
