@@ -419,6 +419,15 @@ export default function AdminPage() {
 
   const power = currentUser ? mergePermissions(currentUser) : rolePresets.super.permissions;
   const currentRoleLabel = currentUser ? roleLabel(currentUser.role) : "未登录";
+  const tabTitles = {
+    overview: "后台总览",
+    products: "商品管理",
+    content: "页面装修",
+    orders: "订单管理",
+    users: "权限管理",
+    settings: "系统设置"
+  };
+  const tabTitle = tabTitles[tab] || "后台管理";
 
   useEffect(() => {
     const savedUsers = readJson(USER_KEY, []);
@@ -575,8 +584,8 @@ export default function AdminPage() {
     if (!power.settings) return;
     const defaults = getDefaultPageContent();
     setPageContent(defaults);
-    writeJson(PAGE_CONTENT_KEY, defaults, PAGE_CONTENT_EVENT);
-    setContentStatus("已恢复默认页面装修，保存后会同步云端");
+    setContentSaved(false);
+    setContentStatus("已恢复默认页面装修草稿，点击保存后才会发布");
   }
 
   function moveProduct(productId, direction) {
@@ -1085,7 +1094,7 @@ export default function AdminPage() {
               <button className="admin-primary" type="submit">{editingUserId ? "保存管理员" : "创建管理员"}</button>
             </form>
           ) : null}
-          <div className="admin-panel admin-user-list-panel"><div className="admin-panel-head"><div><h2>管理员列表</h2><span>超级管理员可分配每个普通管理员的具体权限</span></div><button type="button" className="admin-primary admin-compact-action" onClick={openNewUserForm}>新增管理员</button></div><div className="admin-user-table">{users.map((user) => <article key={user.id}><div><strong>{user.name}</strong><span>{user.username} · {roleLabel(user.role)}</span></div><em className={`admin-status ${user.active ? "active" : "inactive"}`}>{user.active ? "启用" : "停用"}</em><span>{user.mustChangePassword ? "首次登录待改密" : "密码已设置"}</span><div className="admin-permission-tags">{permissionCatalog.filter(([key]) => mergePermissions(user)[key]).map(([key, label]) => <b key={key}>{label}</b>)}</div><div className="admin-row-actions"><button type="button" onClick={() => editUser(user)}>编辑</button><button type="button" disabled={user.id === currentUser.id} onClick={() => toggleUserActive(user.id)}>{user.active ? "停用" : "启用"}</button><button type="button" onClick={() => requirePasswordReset(user.id)}>要求改密</button></div></article>)}</div></div>
+          <div className="admin-panel admin-user-list-panel"><div className="admin-panel-head"><div><h2>管理员列表</h2><span>超级管理员可分配每个普通管理员的具体权限</span></div><button type="button" className="admin-primary admin-compact-action" onClick={openNewUserForm}>新增管理员</button></div><div className="admin-user-table">{users.map((user) => <article key={user.id}><div><strong>{user.name}</strong><span>{user.username} · {roleLabel(user.role)}</span></div><em className={`admin-status ${user.active ? "active" : "inactive"}`}>{user.active ? "启用" : "停用"}</em><span>{user.mustChangePassword ? "首次登录待改密" : "密码已设置"}</span><div className="admin-permission-tags">{permissionCatalog.filter(([key]) => mergePermissions(user)[key]).map(([key, label]) => <b key={key}>{label}</b>)}</div><div className="admin-row-actions"><button type="button" onClick={() => editUser(user)}>编辑</button><button type="button" disabled={user.id === currentUser?.id} onClick={() => toggleUserActive(user.id)}>{user.active ? "停用" : "启用"}</button><button type="button" onClick={() => requirePasswordReset(user.id)}>要求改密</button></div></article>)}</div></div>
         </section> : null}
 
         {tab === "settings" ? (
