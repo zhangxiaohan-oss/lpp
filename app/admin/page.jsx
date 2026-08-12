@@ -412,6 +412,9 @@ export default function AdminPage() {
   const [showUserForm, setShowUserForm] = useState(false);
   const [settings, setSettings] = useState(defaultSettings);
   const [settingsSaved, setSettingsSaved] = useState(false);
+  const [pageContent, setPageContent] = useState(getDefaultPageContent);
+  const [contentSaved, setContentSaved] = useState(false);
+  const [contentStatus, setContentStatus] = useState("正在读取云端页面装修...");
   const [cloudStatus, setCloudStatus] = useState("正在读取云端商品...");
 
   const power = currentUser ? mergePermissions(currentUser) : rolePresets.super.permissions;
@@ -504,6 +507,8 @@ export default function AdminPage() {
     low: items.filter((item) => Number(item.stock) <= 20).length
   }), [items, orders]);
 
+  const editableContent = mergePageContent(pageContent);
+
   const visibleProducts = useMemo(() => {
     const text = query.trim().toLowerCase();
     if (!text) return items;
@@ -513,6 +518,7 @@ export default function AdminPage() {
   function saveProducts(nextItems) {
     setItems(nextItems);
     writeJson(PRODUCT_KEY, nextItems, "lpp-admin-products-change");
+    writeJson(PRODUCT_ORDER_KEY, nextItems.map((item) => item.slug || item.id).filter(Boolean), "lpp-admin-products-change");
     setCloudStatus("正在同步商品到云端...");
     pushRemoteProducts(nextItems)
       .then(() => setCloudStatus(`已同步云端商品：${nextItems.length} 个`))
@@ -875,7 +881,7 @@ export default function AdminPage() {
               <div className="admin-editor-section">
                 <div className="admin-editor-heading"><h3>首页海报轮播</h3><span>图片、标题、按钮都可以替换；勾选“纯海报”时只展示整张图。</span></div>
                 <div className="admin-editor-stack">
-                  {pageContent.heroSlides.map((slide, index) => (
+                  {(Array.isArray(pageContent.heroSlides) ? pageContent.heroSlides : []).map((slide, index) => (
                     <article className="admin-mini-editor" key={`hero-${index}`}>
                       <img src={slide.image} alt="" />
                       <div className="admin-form-grid">
@@ -898,7 +904,7 @@ export default function AdminPage() {
               <div className="admin-editor-section">
                 <div className="admin-editor-heading"><h3>服务承诺条</h3><span>对应首页海报下面的三个卖点卡片。</span></div>
                 <div className="admin-editor-grid three">
-                  {pageContent.servicePromises.map((item, index) => (
+                  {(Array.isArray(pageContent.servicePromises) ? pageContent.servicePromises : []).map((item, index) => (
                     <article className="admin-compact-editor" key={`promise-${index}`}>
                       <label>英文标签<input value={item.kicker || ""} onChange={(event) => updatePageList("servicePromises", index, "kicker", event.target.value)} /></label>
                       <label>??<input value={item.title || ""} onChange={(event) => updatePageList("servicePromises", index, "title", event.target.value)} /></label>
@@ -911,7 +917,7 @@ export default function AdminPage() {
               <div className="admin-editor-section">
                 <div className="admin-editor-heading"><h3>热门分类</h3><span>左侧分类大图和说明会同步到首页分类板块。</span></div>
                 <div className="admin-editor-grid two">
-                  {pageContent.categories.map((item, index) => (
+                  {(Array.isArray(pageContent.categories) ? pageContent.categories : []).map((item, index) => (
                     <article className="admin-mini-editor compact" key={`category-${index}`}>
                       <img src={item.image} alt="" />
                       <label>???<input value={item.label || ""} onChange={(event) => updatePageList("categories", index, "label", event.target.value)} /></label>
@@ -927,18 +933,18 @@ export default function AdminPage() {
               <div className="admin-editor-section">
                 <div className="admin-editor-heading"><h3>精选商品区</h3><span>控制首页热卖商品区的标题、说明和入口按钮。</span></div>
                 <div className="admin-form-grid">
-                  <label>???<input value={pageContent.featured.eyebrow || ""} onChange={(event) => updatePageSection("featured", "eyebrow", event.target.value)} /></label>
-                  <label>??<input value={pageContent.featured.title || ""} onChange={(event) => updatePageSection("featured", "title", event.target.value)} /></label>
-                  <label>按钮文案<input value={pageContent.featured.button || ""} onChange={(event) => updatePageSection("featured", "button", event.target.value)} /></label>
-                  <label>按钮链接<input value={pageContent.featured.href || ""} onChange={(event) => updatePageSection("featured", "href", event.target.value)} /></label>
+                  <label>???<input value={editableContent.featured.eyebrow || ""} onChange={(event) => updatePageSection("featured", "eyebrow", event.target.value)} /></label>
+                  <label>??<input value={editableContent.featured.title || ""} onChange={(event) => updatePageSection("featured", "title", event.target.value)} /></label>
+                  <label>按钮文案<input value={editableContent.featured.button || ""} onChange={(event) => updatePageSection("featured", "button", event.target.value)} /></label>
+                  <label>按钮链接<input value={editableContent.featured.href || ""} onChange={(event) => updatePageSection("featured", "href", event.target.value)} /></label>
                 </div>
-                <label className="admin-wide-label">??<textarea value={pageContent.featured.description || ""} onChange={(event) => updatePageSection("featured", "description", event.target.value)} /></label>
+                <label className="admin-wide-label">??<textarea value={editableContent.featured.description || ""} onChange={(event) => updatePageSection("featured", "description", event.target.value)} /></label>
               </div>
 
               <div className="admin-editor-section">
                 <div className="admin-editor-heading"><h3>评价滚动</h3><button type="button" onClick={() => addPageListItem("reviews", { rating: 5, text: "新的客户评价", name: "客户名称", location: "地区" })}>新增评价</button></div>
                 <div className="admin-editor-stack">
-                  {pageContent.reviews.map((item, index) => (
+                  {(Array.isArray(pageContent.reviews) ? pageContent.reviews : []).map((item, index) => (
                     <article className="admin-compact-editor" key={`review-${index}`}>
                       <div className="admin-form-grid">
                         <label>??<input value={item.name || ""} onChange={(event) => updatePageList("reviews", index, "name", event.target.value)} /></label>
@@ -955,7 +961,7 @@ export default function AdminPage() {
               <div className="admin-editor-section">
                 <div className="admin-editor-heading"><h3>FAQ 问答</h3><button type="button" onClick={() => addPageListItem("faqs", { question: "新的问题", answer: "这里填写回答" })}>新增 FAQ</button></div>
                 <div className="admin-editor-stack">
-                  {pageContent.faqs.map((item, index) => (
+                  {(Array.isArray(pageContent.faqs) ? pageContent.faqs : []).map((item, index) => (
                     <article className="admin-compact-editor" key={`faq-${index}`}>
                       <label>??<input value={item.question || ""} onChange={(event) => updatePageList("faqs", index, "question", event.target.value)} /></label>
                       <label>??<textarea value={item.answer || ""} onChange={(event) => updatePageList("faqs", index, "answer", event.target.value)} /></label>
@@ -968,14 +974,14 @@ export default function AdminPage() {
               <div className="admin-editor-section">
                 <div className="admin-editor-heading"><h3>订阅 CTA 与页脚</h3><span>页脚 Logo 每行一个，前台会自动排成 Logo 墙。</span></div>
                 <div className="admin-form-grid">
-                  <label>CTA ???<input value={pageContent.newsletter.eyebrow || ""} onChange={(event) => updatePageSection("newsletter", "eyebrow", event.target.value)} /></label>
-                  <label>CTA ??<input value={pageContent.newsletter.title || ""} onChange={(event) => updatePageSection("newsletter", "title", event.target.value)} /></label>
-                  <label>按钮文案<input value={pageContent.newsletter.button || ""} onChange={(event) => updatePageSection("newsletter", "button", event.target.value)} /></label>
-                  <label>联系我们<input value={pageContent.newsletter.contact || ""} onChange={(event) => updatePageSection("newsletter", "contact", event.target.value)} /></label>
+                  <label>CTA ???<input value={editableContent.newsletter.eyebrow || ""} onChange={(event) => updatePageSection("newsletter", "eyebrow", event.target.value)} /></label>
+                  <label>CTA ??<input value={editableContent.newsletter.title || ""} onChange={(event) => updatePageSection("newsletter", "title", event.target.value)} /></label>
+                  <label>按钮文案<input value={editableContent.newsletter.button || ""} onChange={(event) => updatePageSection("newsletter", "button", event.target.value)} /></label>
+                  <label>联系我们<input value={editableContent.newsletter.contact || ""} onChange={(event) => updatePageSection("newsletter", "contact", event.target.value)} /></label>
                   <label>页脚标题<input value={pageContent.footer.brandTitle || ""} onChange={(event) => updatePageSection("footer", "brandTitle", event.target.value)} /></label>
                   <label>?? Logo<textarea value={(pageContent.footer.logos || []).join("\n")} onChange={(event) => updatePageSection("footer", "logos", event.target.value.split("\n").map((item) => item.trim()).filter(Boolean))} /></label>
                 </div>
-                <label className="admin-wide-label">CTA ??<textarea value={pageContent.newsletter.description || ""} onChange={(event) => updatePageSection("newsletter", "description", event.target.value)} /></label>
+                <label className="admin-wide-label">CTA ??<textarea value={editableContent.newsletter.description || ""} onChange={(event) => updatePageSection("newsletter", "description", event.target.value)} /></label>
                 <label className="admin-wide-label">页脚说明<textarea value={pageContent.footer.description || ""} onChange={(event) => updatePageSection("footer", "description", event.target.value)} /></label>
               </div>
             </section>
