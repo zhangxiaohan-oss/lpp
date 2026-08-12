@@ -99,6 +99,19 @@ function mergePageContent(saved = {}) {
   };
 }
 
+function contentTimestamp(value) {
+  return Number(asObject(value)._updatedAt || 0);
+}
+
+function shouldUseRemoteContent(localRaw, remoteRaw) {
+  const hasLocal = Boolean(localRaw && typeof localRaw === "object" && Object.keys(localRaw).length);
+  if (!remoteRaw || typeof remoteRaw !== "object" || !Object.keys(remoteRaw).length) return false;
+  if (!hasLocal) return true;
+  const localTime = contentTimestamp(localRaw);
+  const remoteTime = contentTimestamp(remoteRaw);
+  return remoteTime > localTime;
+}
+
 function syncDocumentTitle(storeName) {
   if (typeof document === "undefined") return;
   document.title = String(storeName || "").trim() || "草帽品牌展示站";
@@ -330,11 +343,18 @@ function normalizeProduct(product, index) {
 }
 
 
+function productTimestamp(value) {
+  return Number(asObject(value)._updatedAt || 0);
+}
+
 function mergeProducts(remoteProducts, localProducts) {
   const merged = new Map();
-  [...remoteProducts, ...localProducts].forEach((product, index) => {
+  [...localProducts, ...remoteProducts].forEach((product, index) => {
     const key = product.slug || product.id || `product-${index}`;
-    merged.set(key, { ...(merged.get(key) || {}), ...product });
+    const previous = merged.get(key);
+    if (!previous || productTimestamp(product) >= productTimestamp(previous)) {
+      merged.set(key, { ...(previous || {}), ...product });
+    }
   });
   return Array.from(merged.values()).map((product, index) => normalizeProduct(product, index));
 }
@@ -448,20 +468,25 @@ export default function AdminPage() {
     setSettings(initialSettings);
     syncDocumentTitle(initialSettings.storeName);
 
-    const savedContent = mergePageContent(readJson(PAGE_CONTENT_KEY, {}));
+    const rawSavedContent = readJson(PAGE_CONTENT_KEY, {});
+    const savedContent = mergePageContent(rawSavedContent);
     setPageContent(savedContent);
     fetchRemoteContent()
       .then((remoteContent) => {
         if (!Object.keys(remoteContent).length) {
-          setContentStatus("云端暂无页面装修，保存后会同步");
+          setContentStatus("???????????????");
           return;
         }
-        const mergedContent = mergePageContent({ ...savedContent, ...remoteContent });
+        if (!shouldUseRemoteContent(rawSavedContent, remoteContent)) {
+          setContentStatus("????????????????????");
+          return;
+        }
+        const mergedContent = mergePageContent(remoteContent);
         setPageContent(mergedContent);
         writeJson(PAGE_CONTENT_KEY, mergedContent, PAGE_CONTENT_EVENT);
-        setContentStatus("已同步云端页面装修");
+        setContentStatus("?????????");
       })
-      .catch((error) => setContentStatus(error.message || "云端页面装修读取失败，本机缓存仍可用"));
+      .catch((error) => setContentStatus(error.message || "??????????????????"));
 
     const savedProducts = readJson(PRODUCT_KEY, []);
     const initialProducts = savedProducts.length ? savedProducts.map((product, index) => normalizeProduct(product, index)) : seedProducts();
@@ -525,12 +550,19 @@ export default function AdminPage() {
   }, [items, query]);
 
   function saveProducts(nextItems) {
-    setItems(nextItems);
-    writeJson(PRODUCT_KEY, nextItems, "lpp-admin-products-change");
-    writeJson(PRODUCT_ORDER_KEY, nextItems.map((item) => item.slug || item.id).filter(Boolean), "lpp-admin-products-change");
-    setCloudStatus("正在同步商品到云端...");
-    pushRemoteProducts(nextItems)
-      .then(() => setCloudStatus(`已同步云端商品：${nextItems.length} 个`))
+    const stamp = Date.now();
+    const stampedItems = nextItems.map((item) => ({ ...item, _updatedAt: item._updatedAt || stamp }));
+    setItems(stampedItems);
+    writeJson(PRODUCT_KEY, stampedItems, "lpp-admin-products-change");
+    writeJson(PRODUCT_ORDER_KEY, stampedItems.map((item) => item.slug || item.id).filter(Boolean), "lpp-admin-products-change");
+    setCloudStatus("?????????...");
+    pushRemoteProducts(stampedItems)
+      .then((result) => {
+        const confirmed = Array.isArray(result.products) ? mergeProducts(result.products, stampedItems) : stampedItems;
+        setItems(confirmed);
+        writeJson(PRODUCT_KEY, confirmed, "lpp-admin-products-change");
+        setCloudStatus(`???????????${confirmed.length} ?`);
+      })
       .catch((error) => setCloudStatus(error.message));
   }
 
@@ -569,13 +601,22 @@ export default function AdminPage() {
   function savePageContent(event) {
     event.preventDefault();
     if (!power.settings) return;
-    const normalized = mergePageContent(pageContent);
+    const normalized = mergePageContent({ ...pageContent, _updatedAt: Date.now() });
     setPageContent(normalized);
     writeJson(PAGE_CONTENT_KEY, normalized, PAGE_CONTENT_EVENT);
     setContentSaved(true);
-    setContentStatus("正在同步页面装修到云端...");
+    setContentStatus("???????????...");
     pushRemoteContent(normalized)
-      .then(() => setContentStatus("已同步云端页面装修"))
+      .then((result) => {
+        const confirmed = mergePageContent(result.content || normalized);
+        if (contentTimestamp(confirmed) < contentTimestamp(normalized)) {
+          setContentStatus("?????????????????????????");
+          return;
+        }
+        setPageContent(confirmed);
+        writeJson(PAGE_CONTENT_KEY, confirmed, PAGE_CONTENT_EVENT);
+        setContentStatus("????????????");
+      })
       .catch((error) => setContentStatus(error.message));
     window.setTimeout(() => setContentSaved(false), 2200);
   }

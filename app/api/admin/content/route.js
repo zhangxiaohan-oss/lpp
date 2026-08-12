@@ -1,4 +1,4 @@
-﻿import { getStore } from "@netlify/blobs";
+import { getStore } from "@netlify/blobs";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +19,10 @@ function hasValidAdminToken(request) {
   const expected = process.env.ADMIN_API_TOKEN;
   const provided = request.headers.get("x-admin-token");
   return Boolean(expected && provided && provided === expected);
+}
+
+function contentTimestamp(value) {
+  return Number(value && typeof value === "object" ? value._updatedAt || 0 : 0);
 }
 
 async function readContent() {
@@ -43,10 +47,18 @@ export async function PUT(request) {
 
   try {
     const body = await request.json();
-    const content = body.content && typeof body.content === "object" ? body.content : {};
+    const incoming = body.content && typeof body.content === "object" ? body.content : {};
     const store = getStore(STORE_NAME);
+    const current = await readContent();
+    const content = {
+      ...incoming,
+      _updatedAt: contentTimestamp(incoming) || Date.now()
+    };
+    if (contentTimestamp(current) > contentTimestamp(content)) {
+      return noStoreJson({ ok: false, error: "A newer page version already exists", content: current }, 409);
+    }
     await store.setJSON(CONTENT_KEY, content);
-    return noStoreJson({ ok: true });
+    return noStoreJson({ ok: true, content });
   } catch (error) {
     return noStoreJson({ ok: false, error: error.message || "Unable to save page content" }, 500);
   }

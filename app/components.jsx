@@ -429,6 +429,17 @@ function mergePageContent(saved = {}) {
   };
 }
 
+function contentTimestamp(value) {
+  return Number(asObject(value)._updatedAt || 0);
+}
+
+function shouldUseRemoteContent(localRaw, remoteRaw) {
+  const hasLocal = Boolean(localRaw && typeof localRaw === "object" && Object.keys(localRaw).length);
+  if (!remoteRaw || typeof remoteRaw !== "object" || !Object.keys(remoteRaw).length) return false;
+  if (!hasLocal) return true;
+  return contentTimestamp(remoteRaw) > contentTimestamp(localRaw);
+}
+
 function getPageContent() {
   return mergePageContent(readJson(PAGE_CONTENT_KEY, {}));
 }
@@ -451,7 +462,8 @@ function usePageContent() {
     const sync = () => setContent(getPageContent());
     sync();
     readCloudContent().then((cloudContent) => {
-      if (!Object.keys(cloudContent).length) return;
+      const localContent = readJson(PAGE_CONTENT_KEY, {});
+      if (!shouldUseRemoteContent(localContent, cloudContent)) return;
       writeJson(PAGE_CONTENT_KEY, cloudContent, PAGE_CONTENT_EVENT);
       setContent(mergePageContent(cloudContent));
     });
@@ -501,11 +513,18 @@ function addToCart(slug, qty = 1) {
 }
 
 
+function productTimestamp(value) {
+  return Number(asObject(value)._updatedAt || 0);
+}
+
 function mergeManagedProducts(remoteProducts, localProducts) {
   const merged = new Map();
-  [...remoteProducts, ...localProducts].forEach((product, index) => {
+  [...localProducts, ...remoteProducts].forEach((product, index) => {
     const key = product.slug || product.id || `managed-${index}`;
-    merged.set(key, { ...(merged.get(key) || {}), ...product });
+    const previous = merged.get(key);
+    if (!previous || productTimestamp(product) >= productTimestamp(previous)) {
+      merged.set(key, { ...(previous || {}), ...product });
+    }
   });
   return Array.from(merged.values());
 }
@@ -1275,7 +1294,7 @@ export function CategoryShowcase() {
       <div className="category-feature-list">
         {(Array.isArray(content.categories) ? content.categories : []).filter(Boolean).map((category) => (
           <article className="category-feature-row" key={category.filter}>
-            <a className="category-feature-hero" href={`/shop?filter=${category.filter}`}>
+            <a className="category-feature-main" href={`/shop?filter=${category.filter}`}>
               <img src={category.image} alt={category.label} />
               <span>{category.filter}</span>
               <h3>{category.label}</h3>
@@ -1284,7 +1303,7 @@ export function CategoryShowcase() {
             <div className="category-feature-products">
               <div className="category-feature-heading">
                 <h3>{category.label}系列</h3>
-                <a href={`/shop?filter=${category.filter}`}>订单追踪</a>
+                <a href={`/shop?filter=${category.filter}`}>查看该系列</a>
               </div>
               <div className="category-mini-grid">
                 {(categoryProducts[category.filter] || [])
@@ -1399,7 +1418,7 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
             />
           </label>
           <label>
-            <span>排序</span>
+            <span>筛选</span>
             <select value={filter} onChange={(event) => setFilter(event.target.value)}>
               <option value="all">全部商品</option>
               <option value="custom">Logo 定制</option>
