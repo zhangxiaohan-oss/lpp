@@ -378,6 +378,15 @@ function getDefaultPageContent() {
     categories: categories.map((item) => ({ ...item })),
     reviews: reviews.map((item) => ({ ...item })),
     faqs: faqs.map((item) => ({ ...item })),
+    shopHero: {
+      eyebrow: "全部商品",
+      title: "草帽商店",
+      description: "浏览所有草帽、救生员帽、海滩帽和批发定制款式。可搜索关键词、按场景筛选并查看人民币价格。"
+    },
+    categoryIntro: {
+      eyebrow: "按场景选购",
+      title: "热门分类"
+    },
     featured: {
       eyebrow: "精选商品",
       title: "热卖草帽",
@@ -423,6 +432,8 @@ function mergePageContent(saved = {}) {
     categories: mergeList(source.categories, defaults.categories),
     reviews: mergeList(source.reviews, defaults.reviews),
     faqs: mergeList(source.faqs, defaults.faqs),
+    shopHero: { ...defaults.shopHero, ...asObject(source.shopHero) },
+    categoryIntro: { ...defaults.categoryIntro, ...asObject(source.categoryIntro) },
     featured: { ...defaults.featured, ...asObject(source.featured) },
     newsletter: { ...defaults.newsletter, ...asObject(source.newsletter) },
     footer: { ...defaults.footer, ...asObject(source.footer) }
@@ -1275,8 +1286,21 @@ export function ServicePromises() {
   );
 }
 
+export function ShopHero() {
+  const content = usePageContent();
+  const shopHero = content.shopHero || getDefaultPageContent().shopHero;
+  return (
+    <section className="page-hero shop-hero">
+      <p className="eyebrow">{shopHero.eyebrow}</p>
+      <h1>{shopHero.title}</h1>
+      <p>{shopHero.description}</p>
+    </section>
+  );
+}
+
 export function CategoryShowcase() {
   const content = usePageContent();
+  const categoryIntro = content.categoryIntro || getDefaultPageContent().categoryIntro;
   const catalog = getClientProducts();
   const categoryProducts = {
     beach: ["wholesale-custom-logo-surfing-beach-straw-hats", "unisex-beach-lifeguard-straw-hat", "custom-panama-beach-lifeguard-hat", "wholesale-american-beach-straw-hat", "fashion-custom-logo-beach-straw-hat", "plain-wide-brim-sun-hat"],
@@ -1288,8 +1312,8 @@ export function CategoryShowcase() {
   return (
     <section className="category-section">
       <div className="section-heading">
-        <p className="eyebrow">按场景选购</p>
-        <h2>热门分类</h2>
+        <p className="eyebrow">{categoryIntro.eyebrow}</p>
+        <h2>{categoryIntro.title}</h2>
       </div>
       <div className="category-feature-list">
         {(Array.isArray(content.categories) ? content.categories : []).filter(Boolean).map((category) => (

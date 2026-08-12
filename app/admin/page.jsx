@@ -48,6 +48,15 @@ function getDefaultPageContent() {
     categories: categories.map((item) => ({ ...item })),
     reviews: reviews.map((item) => ({ ...item })),
     faqs: faqs.map((item) => ({ ...item })),
+    shopHero: {
+      eyebrow: "全部商品",
+      title: "草帽商店",
+      description: "浏览所有草帽、救生员帽、海滩帽和批发定制款式。可搜索关键词、按场景筛选并查看人民币价格。"
+    },
+    categoryIntro: {
+      eyebrow: "按场景选购",
+      title: "热门分类"
+    },
     featured: {
       eyebrow: "精选商品",
       title: "热卖草帽",
@@ -93,6 +102,8 @@ function mergePageContent(saved = {}) {
     categories: mergeList(source.categories, defaults.categories),
     reviews: mergeList(source.reviews, defaults.reviews),
     faqs: mergeList(source.faqs, defaults.faqs),
+    shopHero: { ...defaults.shopHero, ...asObject(source.shopHero) },
+    categoryIntro: { ...defaults.categoryIntro, ...asObject(source.categoryIntro) },
     featured: { ...defaults.featured, ...asObject(source.featured) },
     newsletter: { ...defaults.newsletter, ...asObject(source.newsletter) },
     footer: { ...defaults.footer, ...asObject(source.footer) }
@@ -604,21 +615,26 @@ export default function AdminPage() {
     const normalized = mergePageContent({ ...pageContent, _updatedAt: Date.now() });
     setPageContent(normalized);
     writeJson(PAGE_CONTENT_KEY, normalized, PAGE_CONTENT_EVENT);
-    setContentSaved(true);
+    setContentSaved(false);
     setContentStatus("正在同步页面装修到云端...");
     pushRemoteContent(normalized)
       .then((result) => {
         const confirmed = mergePageContent(result.content || normalized);
         if (contentTimestamp(confirmed) < contentTimestamp(normalized)) {
+          setContentSaved(false);
           setContentStatus("云端已有更新版本，请刷新后台后再保存");
           return;
         }
         setPageContent(confirmed);
         writeJson(PAGE_CONTENT_KEY, confirmed, PAGE_CONTENT_EVENT);
+        setContentSaved(true);
         setContentStatus("已保存并确认云端页面装修");
+        window.setTimeout(() => setContentSaved(false), 2200);
       })
-      .catch((error) => setContentStatus(error.message));
-    window.setTimeout(() => setContentSaved(false), 2200);
+      .catch((error) => {
+        setContentSaved(false);
+        setContentStatus(error.message);
+      });
   }
 
   function resetPageContent() {
@@ -961,6 +977,23 @@ export default function AdminPage() {
                       <label>描述<textarea value={item.description || ""} onChange={(event) => updatePageList("servicePromises", index, "description", event.target.value)} /></label>
                     </article>
                   ))}
+                </div>
+              </div>
+
+              <div className="admin-editor-section">
+                <div className="admin-editor-heading"><h3>商店页头部</h3><span>对应商店页顶部的小标题、主标题和说明文案。</span></div>
+                <div className="admin-form-grid">
+                  <label>小标题<input value={editableContent.shopHero.eyebrow || ""} onChange={(event) => updatePageSection("shopHero", "eyebrow", event.target.value)} /></label>
+                  <label>主标题<input value={editableContent.shopHero.title || ""} onChange={(event) => updatePageSection("shopHero", "title", event.target.value)} /></label>
+                </div>
+                <label className="admin-wide-label">说明文字<textarea value={editableContent.shopHero.description || ""} onChange={(event) => updatePageSection("shopHero", "description", event.target.value)} /></label>
+              </div>
+
+              <div className="admin-editor-section">
+                <div className="admin-editor-heading"><h3>热门分类标题</h3><span>对应首页和商店页分类区块上方的标题文案。</span></div>
+                <div className="admin-form-grid">
+                  <label>区块小标题<input value={editableContent.categoryIntro.eyebrow || ""} onChange={(event) => updatePageSection("categoryIntro", "eyebrow", event.target.value)} /></label>
+                  <label>区块标题<input value={editableContent.categoryIntro.title || ""} onChange={(event) => updatePageSection("categoryIntro", "title", event.target.value)} /></label>
                 </div>
               </div>
 
