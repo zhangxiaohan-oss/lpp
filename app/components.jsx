@@ -1167,15 +1167,15 @@ export function Footer() {
         </div>
       </div>
       <div className="footer-links">
-        <a href="/shop">??</a>
+        <a href="/shop">商店</a>
         <a href="/customize">订单追踪</a>
         <a href="/tracking">订单追踪</a>
         <a href="/contact">订单追踪</a>
       </div>
       <div className="footer-links">
-        <a href="/wishlist">???</a>
+        <a href="/wishlist">收藏夹</a>
         <a href="/compare">订单追踪</a>
-        <a href="/cart">???</a>
+        <a href="/cart">购物车</a>
         <a href="/checkout">订单追踪</a>
       </div>
     </footer>
@@ -1283,7 +1283,7 @@ export function CategoryShowcase() {
             </a>
             <div className="category-feature-products">
               <div className="category-feature-heading">
-                <h3>{category.label}??</h3>
+                <h3>{category.label}系列</h3>
                 <a href={`/shop?filter=${category.filter}`}>订单追踪</a>
               </div>
               <div className="category-mini-grid">
@@ -1399,25 +1399,25 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
             />
           </label>
           <label>
-            <span>??</span>
+            <span>排序</span>
             <select value={filter} onChange={(event) => setFilter(event.target.value)}>
               <option value="all">全部商品</option>
-              <option value="custom">Logo ??</option>
+              <option value="custom">Logo 定制</option>
               <option value="lifeguard">救生员帽</option>
-              <option value="beach">???</option>
+              <option value="beach">海滩草帽</option>
               <option value="surf">冲浪与海滩</option>
               <option value="wholesale">批发采购</option>
               <option value="fishing">钓鱼户外</option>
             </select>
           </label>
           <label>
-            <span>??</span>
+            <span>排序</span>
             <select value={sort} onChange={(event) => setSort(event.target.value)}>
               <option value="featured">推荐排序</option>
               <option value="rating">评分优先</option>
               <option value="price-asc">价格从低到高</option>
               <option value="price-desc">价格从高到低</option>
-              <option value="name">?? A-Z</option>
+              <option value="name">名称 A-Z</option>
             </select>
           </label>
         </div>
@@ -1675,7 +1675,7 @@ export function NewsletterCta() {
         <p>{newsletter.description}</p>
       </div>
       <form onSubmit={(event) => event.preventDefault()}>
-        <input type="email" placeholder="you@example.com" aria-label="??" />
+        <input type="email" placeholder="you@example.com" aria-label="邮箱地址" />
         <button className="button button-primary" type="submit">
           {newsletter.button}
         </button>
