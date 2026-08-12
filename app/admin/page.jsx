@@ -474,19 +474,19 @@ export default function AdminPage() {
     fetchRemoteContent()
       .then((remoteContent) => {
         if (!Object.keys(remoteContent).length) {
-          setContentStatus("???????????????");
+          setContentStatus("云端暂无页面装修，当前显示本机草稿");
           return;
         }
         if (!shouldUseRemoteContent(rawSavedContent, remoteContent)) {
-          setContentStatus("????????????????????");
+          setContentStatus("本机装修草稿较新，点击保存后会发布到云端");
           return;
         }
         const mergedContent = mergePageContent(remoteContent);
         setPageContent(mergedContent);
         writeJson(PAGE_CONTENT_KEY, mergedContent, PAGE_CONTENT_EVENT);
-        setContentStatus("?????????");
+        setContentStatus("已同步云端页面装修");
       })
-      .catch((error) => setContentStatus(error.message || "??????????????????"));
+      .catch((error) => setContentStatus(error.message || "云端页面装修读取失败，本机缓存仍可用"));
 
     const savedProducts = readJson(PRODUCT_KEY, []);
     const initialProducts = savedProducts.length ? savedProducts.map((product, index) => normalizeProduct(product, index)) : seedProducts();
@@ -555,13 +555,13 @@ export default function AdminPage() {
     setItems(stampedItems);
     writeJson(PRODUCT_KEY, stampedItems, "lpp-admin-products-change");
     writeJson(PRODUCT_ORDER_KEY, stampedItems.map((item) => item.slug || item.id).filter(Boolean), "lpp-admin-products-change");
-    setCloudStatus("?????????...");
+    setCloudStatus("正在同步商品到云端...");
     pushRemoteProducts(stampedItems)
       .then((result) => {
         const confirmed = Array.isArray(result.products) ? mergeProducts(result.products, stampedItems) : stampedItems;
         setItems(confirmed);
         writeJson(PRODUCT_KEY, confirmed, "lpp-admin-products-change");
-        setCloudStatus(`???????????${confirmed.length} ?`);
+        setCloudStatus(`已同步云端商品：${confirmed.length} 个`);
       })
       .catch((error) => setCloudStatus(error.message));
   }
@@ -605,17 +605,17 @@ export default function AdminPage() {
     setPageContent(normalized);
     writeJson(PAGE_CONTENT_KEY, normalized, PAGE_CONTENT_EVENT);
     setContentSaved(true);
-    setContentStatus("???????????...");
+    setContentStatus("正在同步页面装修到云端...");
     pushRemoteContent(normalized)
       .then((result) => {
         const confirmed = mergePageContent(result.content || normalized);
         if (contentTimestamp(confirmed) < contentTimestamp(normalized)) {
-          setContentStatus("?????????????????????????");
+          setContentStatus("云端已有更新版本，请刷新后台后再保存");
           return;
         }
         setPageContent(confirmed);
         writeJson(PAGE_CONTENT_KEY, confirmed, PAGE_CONTENT_EVENT);
-        setContentStatus("????????????");
+        setContentStatus("已保存并确认云端页面装修");
       })
       .catch((error) => setContentStatus(error.message));
     window.setTimeout(() => setContentSaved(false), 2200);

@@ -462,10 +462,10 @@ function usePageContent() {
     const sync = () => setContent(getPageContent());
     sync();
     readCloudContent().then((cloudContent) => {
-      const localContent = readJson(PAGE_CONTENT_KEY, {});
-      if (!shouldUseRemoteContent(localContent, cloudContent)) return;
-      writeJson(PAGE_CONTENT_KEY, cloudContent, PAGE_CONTENT_EVENT);
-      setContent(mergePageContent(cloudContent));
+      if (!cloudContent || typeof cloudContent !== "object" || !Object.keys(cloudContent).length) return;
+      const publishedContent = mergePageContent(cloudContent);
+      writeJson(PAGE_CONTENT_KEY, publishedContent, PAGE_CONTENT_EVENT);
+      setContent(publishedContent);
     });
     window.addEventListener(PAGE_CONTENT_EVENT, sync);
     window.addEventListener("storage", sync);
