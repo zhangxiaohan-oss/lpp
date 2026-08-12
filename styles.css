@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --text: #202124;
   --muted: #6e746f;
   --border: #e7eadf;
@@ -2994,6 +2994,15 @@ button {
   padding: 14px;
 }
 
+.admin-wide-label,
+.admin-mini-editor label:not(.admin-file-button),
+.admin-compact-editor label:not(.admin-file-button) {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
 .admin-mini-editor > img {
   width: 100%;
   max-height: 280px;
@@ -3009,17 +3018,25 @@ button {
 .admin-compact-editor textarea,
 .admin-mini-editor textarea,
 .admin-content-panel textarea {
-  min-height: 86px;
+  width: 100%;
+  min-width: 0;
+  min-height: 124px;
   border: 1px solid #dfe5d8;
   border-radius: 6px;
   background: #fff;
-  padding: 10px 12px;
+  padding: 12px 14px;
+  line-height: 1.65;
   resize: vertical;
 }
 
 .admin-compact-editor input,
+.admin-compact-editor select,
 .admin-mini-editor input,
-.admin-mini-editor select {
+.admin-mini-editor select,
+.admin-content-panel input,
+.admin-content-panel select {
+  width: 100%;
+  min-width: 0;
   min-height: 42px;
   border: 1px solid #dfe5d8;
   border-radius: 6px;
@@ -3072,3 +3089,4 @@ button {
     max-height: 210px;
   }
 }
+
