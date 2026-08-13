@@ -2920,25 +2920,41 @@ button {
 
 .admin-content-layout {
   display: grid;
-  gap: 18px;
+  gap: 20px;
 }
 
 .admin-content-panel {
-  gap: 26px;
+  display: grid;
+  gap: 28px;
+  padding: 24px;
+}
+
+.admin-content-panel > .admin-panel-head {
+  align-items: flex-start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #edf0e8;
+}
+
+.admin-content-panel > .admin-panel-head > div:first-child {
+  display: grid;
+  gap: 6px;
 }
 
 .admin-editor-section {
   display: grid;
-  gap: 14px;
-  border-top: 1px solid #edf0e8;
-  padding-top: 20px;
+  gap: 18px;
+  border: 1px solid #e6ebde;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcf8 100%);
+  padding: 22px;
+  box-shadow: 0 16px 42px rgba(31, 44, 25, 0.06);
 }
 
 .admin-editor-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
 }
 
 .admin-editor-heading h3 {
@@ -2947,19 +2963,21 @@ button {
 }
 
 .admin-editor-heading span {
+  display: block;
+  max-width: 760px;
   color: #687065;
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .admin-editor-heading button,
 .admin-compact-editor button {
-  min-height: 36px;
+  min-height: 40px;
   border: 1px solid #dfe5d8;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #fff;
   color: #30352e;
-  padding: 0 12px;
+  padding: 0 14px;
   font-weight: 900;
 }
 
@@ -2973,7 +2991,7 @@ button {
 .admin-editor-stack,
 .admin-editor-grid {
   display: grid;
-  gap: 14px;
+  gap: 18px;
 }
 
 .admin-editor-grid.two {
@@ -2987,11 +3005,92 @@ button {
 .admin-mini-editor,
 .admin-compact-editor {
   display: grid;
-  gap: 14px;
-  border: 1px solid #edf0e8;
-  border-radius: 8px;
-  background: #fbfcf8;
-  padding: 14px;
+  gap: 16px;
+  border: 1px solid #dfe6d4;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(31, 44, 25, 0.05);
+}
+
+.admin-mini-editor--hero {
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  align-items: start;
+}
+
+.admin-mini-editor--hero > img {
+  grid-row: 1 / span 3;
+  min-height: 100%;
+  height: 100%;
+  max-height: none;
+  aspect-ratio: 4 / 5;
+}
+
+.admin-mini-editor--hero > .admin-form-grid,
+.admin-mini-editor--hero > .admin-wide-label,
+.admin-mini-editor--hero > .admin-file-button {
+  grid-column: 2;
+}
+
+.admin-mini-editor--category {
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  align-items: start;
+}
+
+.admin-mini-editor--category > img {
+  grid-row: 1 / span 5;
+  min-height: 240px;
+  height: 100%;
+  max-height: none;
+}
+
+.admin-mini-editor--category > label:not(.admin-file-button),
+.admin-mini-editor--category > .admin-file-button {
+  grid-column: 2;
+}
+
+.admin-mini-editor--category textarea {
+  min-height: 150px;
+}
+
+.admin-compact-editor--review {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.admin-compact-editor--review > .admin-form-grid,
+.admin-compact-editor--review > .admin-wide-label {
+  grid-column: 1;
+}
+
+.admin-compact-editor--review > button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: end;
+  white-space: nowrap;
+}
+
+.admin-compact-editor--review .admin-form-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-compact-editor--faq {
+  grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.1fr) auto;
+  align-items: end;
+}
+
+.admin-compact-editor--faq > label:first-of-type {
+  grid-column: 1;
+}
+
+.admin-compact-editor--faq > .admin-wide-label {
+  grid-column: 2;
+}
+
+.admin-compact-editor--faq > button {
+  grid-column: 3;
+  align-self: end;
+  white-space: nowrap;
 }
 
 .admin-wide-label,
@@ -3003,16 +3102,19 @@ button {
   min-width: 0;
 }
 
+.admin-grid-span-2 {
+  grid-column: 1 / -1;
+}
+
 .admin-mini-editor > img {
   width: 100%;
-  max-height: 280px;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #eef2ea;
   object-fit: cover;
 }
 
 .admin-mini-editor.compact > img {
-  max-height: 190px;
+  max-height: 220px;
 }
 
 .admin-compact-editor textarea,
@@ -3022,7 +3124,7 @@ button {
   min-width: 0;
   min-height: 124px;
   border: 1px solid #dfe5d8;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #fff;
   padding: 12px 14px;
   line-height: 1.65;
@@ -3037,9 +3139,9 @@ button {
 .admin-content-panel select {
   width: 100%;
   min-width: 0;
-  min-height: 42px;
+  min-height: 44px;
   border: 1px solid #dfe5d8;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #fff;
   padding: 0 12px;
 }
@@ -3068,25 +3170,69 @@ button {
   font-weight: 900;
 }
 
+@media (max-width: 1280px) {
+  .admin-mini-editor--hero,
+  .admin-mini-editor--category,
+  .admin-compact-editor--review,
+  .admin-compact-editor--faq {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-mini-editor--hero > img,
+  .admin-mini-editor--category > img {
+    grid-row: auto;
+    min-height: 220px;
+    max-height: 320px;
+  }
+
+  .admin-mini-editor--hero > .admin-form-grid,
+  .admin-mini-editor--hero > .admin-wide-label,
+  .admin-mini-editor--hero > .admin-file-button,
+  .admin-mini-editor--category > label:not(.admin-file-button),
+  .admin-mini-editor--category > .admin-file-button,
+  .admin-compact-editor--review > button,
+  .admin-compact-editor--faq > .admin-wide-label,
+  .admin-compact-editor--faq > button {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
 @media (max-width: 1120px) {
   .admin-nav {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .admin-editor-grid.two,
-  .admin-editor-grid.three {
+  .admin-editor-grid.three,
+  .admin-compact-editor--review .admin-form-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 760px) {
+  .admin-content-panel {
+    padding: 18px;
+  }
+
+  .admin-editor-section {
+    padding: 18px;
+    border-radius: 12px;
+  }
+
   .admin-editor-heading {
+    grid-template-columns: 1fr;
     align-items: flex-start;
-    flex-direction: column;
+  }
+
+  .admin-editor-heading button,
+  .admin-compact-editor button {
+    width: 100%;
   }
 
   .admin-mini-editor > img {
     max-height: 210px;
   }
 }
+
 
