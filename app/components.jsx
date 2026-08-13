@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Price } from "./currency";
 import {
   categories,
@@ -451,6 +451,12 @@ function shouldUseRemoteContent(localRaw, remoteRaw) {
   return contentTimestamp(remoteRaw) > contentTimestamp(localRaw);
 }
 
+const PageContentContext = createContext(null);
+
+export function PageContentProvider({ initialContent, children }) {
+  return <PageContentContext.Provider value={initialContent || null}>{children}</PageContentContext.Provider>;
+}
+
 function getPageContent() {
   return mergePageContent(readJson(PAGE_CONTENT_KEY, {}));
 }
@@ -467,9 +473,23 @@ async function readCloudContent() {
 }
 
 function usePageContent() {
-  const [content, setContent] = useState(getDefaultPageContent);
+  const initialContent = useContext(PageContentContext);
+  const [content, setContent] = useState(() => {
+    const seeded = mergePageContent(initialContent || {});
+    if (typeof window === "undefined") return seeded;
+    const localRaw = readJson(PAGE_CONTENT_KEY, {});
+    const hasRemote = Boolean(initialContent && typeof initialContent === "object" && Object.keys(initialContent).length);
+    return shouldUseRemoteContent(localRaw, hasRemote ? initialContent : {}) ? seeded : mergePageContent(localRaw);
+  });
 
   useEffect(() => {
+    const seeded = mergePageContent(initialContent || {});
+    const localRaw = readJson(PAGE_CONTENT_KEY, {});
+    const hasRemote = Boolean(initialContent && typeof initialContent === "object" && Object.keys(initialContent).length);
+    if (hasRemote && shouldUseRemoteContent(localRaw, initialContent)) {
+      writeJson(PAGE_CONTENT_KEY, seeded, PAGE_CONTENT_EVENT);
+      setContent(seeded);
+    }
     const sync = () => setContent(getPageContent());
     sync();
     readCloudContent().then((cloudContent) => {
@@ -484,7 +504,7 @@ function usePageContent() {
       window.removeEventListener(PAGE_CONTENT_EVENT, sync);
       window.removeEventListener("storage", sync);
     };
-  }, []);
+  }, [initialContent]);
 
   return content;
 }
@@ -1846,3 +1866,5 @@ function Rating({ rating, count }) {
     </div>
   );
 }
+
+
