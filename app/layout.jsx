@@ -2,6 +2,9 @@
 import { PageContentProvider } from "./components";
 import { readPublishedPageContent } from "./page-content-server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata = {
   title: "草帽品牌展示站",
   description: "草帽品牌展示站，支持多页面商品展示、人民币价格、收藏、对比、购物车和定制咨询演示。"

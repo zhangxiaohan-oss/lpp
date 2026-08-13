@@ -1,4 +1,4 @@
-import {
+﻿import {
   CategoryShowcase,
   FaqSection,
   Footer,
@@ -10,6 +10,9 @@ import {
   FeaturedProductsSection
 } from "./components";
 import { heroSlides } from "./data";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default function Home() {
   return (
