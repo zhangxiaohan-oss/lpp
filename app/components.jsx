@@ -555,7 +555,11 @@ function productTimestamp(value) {
 
 function mergeManagedProducts(remoteProducts, localProducts) {
   const merged = new Map();
-  [...localProducts, ...remoteProducts].forEach((product, index) => {
+  const safeLocalProducts = Array.isArray(localProducts) ? localProducts : [];
+  const safeRemoteProducts = Array.isArray(remoteProducts) ? remoteProducts : [];
+
+  [...safeLocalProducts, ...safeRemoteProducts].forEach((product, index) => {
+    if (!product || typeof product !== "object") return;
     const key = product.slug || product.id || `managed-${index}`;
     const previous = merged.get(key);
     if (!previous || productTimestamp(product) >= productTimestamp(previous)) {
@@ -573,19 +577,21 @@ function toggleListItem(key, slug) {
 }
 function getClientProducts({ includeInactive = false, managedProducts = readJson(ADMIN_PRODUCTS_KEY, []) } = {}) {
   const merged = new Map();
+  const safeManagedProducts = Array.isArray(managedProducts) ? managedProducts : [];
 
   products.forEach((product, index) => {
+    if (!product || typeof product !== "object") return;
     merged.set(product.slug || `seed-${index}`, product);
   });
 
-  if (Array.isArray(managedProducts)) {
-    managedProducts.forEach((product, index) => {
-      const key = product.slug || product.id || `admin-${index}`;
-      merged.set(key, { ...product, adminManaged: product.adminManaged ?? true });
-    });
-  }
+  safeManagedProducts.forEach((product, index) => {
+    if (!product || typeof product !== "object") return;
+    const key = product.slug || product.id || `admin-${index}`;
+    merged.set(key, { ...product, adminManaged: product.adminManaged ?? true });
+  });
 
-  const productOrder = readJson(PRODUCT_ORDER_KEY, []);
+  const productOrderRaw = readJson(PRODUCT_ORDER_KEY, []);
+  const productOrder = Array.isArray(productOrderRaw) ? productOrderRaw : [];
   const orderIndex = new Map(productOrder.map((key, index) => [String(key), index]));
   const arranged = Array.from(merged.values()).sort((a, b) => {
     const leftKey = String(a.slug || a.id || "");
@@ -1351,13 +1357,23 @@ export function CategoryShowcase() {
   const [catalog, setCatalog] = useState(() => getClientProducts());
 
   useEffect(() => {
-    const syncCatalog = () => setCatalog(getClientProducts());
+    const syncCatalog = () => {
+      try {
+        setCatalog(getClientProducts());
+      } catch {
+        setCatalog([]);
+      }
+    };
     syncCatalog();
     readCloudProducts().then((cloudProducts) => {
-      if (!cloudProducts.length) return;
+      if (!Array.isArray(cloudProducts) || !cloudProducts.length) return;
       const mergedProducts = mergeManagedProducts(cloudProducts, readJson(ADMIN_PRODUCTS_KEY, []));
       writeJson(ADMIN_PRODUCTS_KEY, mergedProducts, "lpp-admin-products-change");
-      setCatalog(getClientProducts({ managedProducts: mergedProducts }));
+      try {
+        setCatalog(getClientProducts({ managedProducts: mergedProducts }));
+      } catch {
+        setCatalog(mergedProducts);
+      }
     });
     window.addEventListener("lpp-admin-products-change", syncCatalog);
     window.addEventListener("storage", syncCatalog);
@@ -1467,13 +1483,23 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
     if (urlSearch) setSearch(urlSearch);
   }, []);
   useEffect(() => {
-    const syncCatalog = () => setCatalog(getClientProducts());
+    const syncCatalog = () => {
+      try {
+        setCatalog(getClientProducts());
+      } catch {
+        setCatalog(Array.isArray(products) ? products : []);
+      }
+    };
     syncCatalog();
     readCloudProducts().then((cloudProducts) => {
-      if (!cloudProducts.length) return;
+      if (!Array.isArray(cloudProducts) || !cloudProducts.length) return;
       const mergedProducts = mergeManagedProducts(cloudProducts, readJson(ADMIN_PRODUCTS_KEY, []));
       writeJson(ADMIN_PRODUCTS_KEY, mergedProducts, "lpp-admin-products-change");
-      setCatalog(getClientProducts({ managedProducts: mergedProducts }));
+      try {
+        setCatalog(getClientProducts({ managedProducts: mergedProducts }));
+      } catch {
+        setCatalog(Array.isArray(mergedProducts) ? mergedProducts : []);
+      }
     });
     window.addEventListener("lpp-admin-products-change", syncCatalog);
     window.addEventListener("storage", syncCatalog);
@@ -1498,7 +1524,8 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
 
   const visibleProducts = useMemo(() => {
     const searchText = search.trim().toLowerCase();
-    const items = catalog.filter((product) => {
+    const safeCatalog = Array.isArray(catalog) ? catalog : [];
+    const items = safeCatalog.filter((product) => {
       const productTags = Array.isArray(product.tags) ? product.tags : [];
       const haystack = [product.title, product.description, product.category, product.sku, product.productLink, productTags.join(" ")].join(" ").toLowerCase();
       const tags = productTags.map((tag) => String(tag).toLowerCase());
