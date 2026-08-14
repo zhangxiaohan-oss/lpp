@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Price } from "./currency";
@@ -375,7 +375,7 @@ function getDefaultPageContent() {
       ...slide
     })),
     servicePromises: servicePromises.map((item) => ({ ...item })),
-    categories: categories.map((item) => ({ ...item })),
+    categories: categories.map((item) => ({ ...item, productSlugs: Array.isArray(item.productSlugs) ? item.productSlugs : [] })),
     reviews: reviews.map((item) => ({ ...item })),
     faqs: faqs.map((item) => ({ ...item })),
     shopHero: {
@@ -494,6 +494,11 @@ function usePageContent() {
     sync();
     readCloudContent().then((cloudContent) => {
       if (!cloudContent || typeof cloudContent !== "object" || !Object.keys(cloudContent).length) return;
+      const localRaw = readJson(PAGE_CONTENT_KEY, {});
+      if (!shouldUseRemoteContent(localRaw, cloudContent)) {
+        setContent(mergePageContent(localRaw));
+        return;
+      }
       const publishedContent = mergePageContent(cloudContent);
       writeJson(PAGE_CONTENT_KEY, publishedContent, PAGE_CONTENT_EVENT);
       setContent(publishedContent);
@@ -632,6 +637,7 @@ function getClientProducts({ includeInactive = false, managedProducts = readJson
 
 
 export function Header() {
+  const content = usePageContent();
   const [navOpen, setNavOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [counts, setCounts] = useState({ cart: 0, wishlist: 0, compare: 0 });
@@ -708,6 +714,27 @@ export function Header() {
 
   const currentCurrency = currencyOptions.find((item) => item.code === currency) || currencyOptions[0];
   const currentLanguage = languageOptions.find((item) => item.code === language) || languageOptions[0];
+  const liveNavItems = useMemo(() => {
+    const liveCategories = Array.isArray(content.categories)
+      ? content.categories.filter(Boolean).map((category) => ({
+          label: category.label || "全部产品",
+          href:
+            typeof category.href === "string" && category.href.trim()
+              ? category.href
+              : category.filter
+                ? `/shop?filter=${encodeURIComponent(category.filter)}`
+                : "/shop"
+        }))
+      : [];
+
+    return navItems.map((item) => {
+      if (item.href !== "/shop" || !Array.isArray(item.children)) return item;
+      return {
+        ...item,
+        children: [{ label: "全部产品", href: "/shop" }, ...liveCategories]
+      };
+    });
+  }, [content.categories]);
 
   return (
     <>
@@ -730,7 +757,7 @@ export function Header() {
         </button>
 
         <nav id="site-nav" className={`site-nav${navOpen ? " is-open" : ""}`} aria-label="主导航">
-          {navItems.map((item) => (
+          {liveNavItems.map((item) => (
             item.children ? (
               <div className="nav-menu-item" key={item.href}>
                 <a href={item.href}>
@@ -1321,13 +1348,24 @@ export function ShopHero() {
 export function CategoryShowcase() {
   const content = usePageContent();
   const categoryIntro = content.categoryIntro || getDefaultPageContent().categoryIntro;
-  const catalog = getClientProducts();
-  const categoryProducts = {
-    beach: ["wholesale-custom-logo-surfing-beach-straw-hats", "unisex-beach-lifeguard-straw-hat", "custom-panama-beach-lifeguard-hat", "wholesale-american-beach-straw-hat", "fashion-custom-logo-beach-straw-hat", "plain-wide-brim-sun-hat"],
-    lifeguard: ["american-style-lifeguard-straw-hats", "natural-straw-lifeguard-logo-print-hat", "custom-logo-patch-lifeguard-straw-hat", "applique-embroidered-logo-lifeguard-hat", "wide-brim-summer-fishing-straw-hat", "upf50-american-flag-surfing-hat"],
-    surf: ["custom-printed-surfing-straw-hats", "striped-american-straw-hat", "upf50-american-flag-surfing-hat", "mens-fishing-surfing-logo-straw-hat", "american-style-lifeguard-straw-hats", "fashion-custom-logo-beach-straw-hat"],
-    custom: ["customize", "custom-logo-patch-lifeguard-straw-hat", "fashion-custom-logo-beach-straw-hat", "wholesale-custom-logo-surfing-beach-straw-hats", "custom-printed-surfing-straw-hats", "natural-straw-lifeguard-logo-print-hat"]
-  };
+  const [catalog, setCatalog] = useState(() => getClientProducts());
+
+  useEffect(() => {
+    const syncCatalog = () => setCatalog(getClientProducts());
+    syncCatalog();
+    readCloudProducts().then((cloudProducts) => {
+      if (!cloudProducts.length) return;
+      const mergedProducts = mergeManagedProducts(cloudProducts, readJson(ADMIN_PRODUCTS_KEY, []));
+      writeJson(ADMIN_PRODUCTS_KEY, mergedProducts, "lpp-admin-products-change");
+      setCatalog(getClientProducts({ managedProducts: mergedProducts }));
+    });
+    window.addEventListener("lpp-admin-products-change", syncCatalog);
+    window.addEventListener("storage", syncCatalog);
+    return () => {
+      window.removeEventListener("lpp-admin-products-change", syncCatalog);
+      window.removeEventListener("storage", syncCatalog);
+    };
+  }, []);
 
   return (
     <section className="category-section">
@@ -1336,24 +1374,42 @@ export function CategoryShowcase() {
         <h2>{categoryIntro.title}</h2>
       </div>
       <div className="category-feature-list">
-        {(Array.isArray(content.categories) ? content.categories : []).filter(Boolean).map((category) => (
-          <article className="category-feature-row" key={category.filter}>
-            <a className="category-feature-main" href={`/shop?filter=${category.filter}`}>
-              <img src={category.image} alt={category.label} />
-              <span>{category.filter}</span>
-              <h3>{category.label}</h3>
-              <p>{category.description}</p>
-            </a>
-            <div className="category-feature-products">
-              <div className="category-feature-heading">
-                <h3>{category.label}系列</h3>
-                <a href={`/shop?filter=${category.filter}`}>查看该系列</a>
-              </div>
-              <div className="category-mini-grid">
-                {(categoryProducts[category.filter] || [])
-                  .map((slug) => catalog.find((product) => product.slug === slug))
-                  .filter(Boolean)
-                  .map((product) => (
+        {(Array.isArray(content.categories) ? content.categories : []).filter(Boolean).map((category) => {
+          const categoryHref = typeof category.href === "string" && category.href.trim()
+            ? category.href
+            : category.filter
+              ? `/shop?filter=${encodeURIComponent(category.filter)}`
+              : "/shop";
+          const selectedSlugs = Array.isArray(category.productSlugs)
+            ? category.productSlugs.map((slug) => String(slug || "").trim()).filter(Boolean)
+            : [];
+          const selectedProducts = selectedSlugs
+            .map((slug) => catalog.find((product) => String(product.slug) === slug))
+            .filter(Boolean);
+          const fallbackProducts = catalog.filter((product) => {
+            const tags = Array.isArray(product.tags) ? product.tags : [];
+            const normalizedFilter = String(category.filter || "").toLowerCase();
+            return normalizedFilter
+              ? tags.some((tag) => String(tag).toLowerCase() === normalizedFilter)
+              : true;
+          });
+          const showcaseProducts = (selectedProducts.length ? selectedProducts : fallbackProducts).slice(0, 6);
+
+          return (
+            <article className="category-feature-row" key={category.filter || category.href || category.label}>
+              <a className="category-feature-main" href={categoryHref}>
+                <img src={category.image} alt={category.label} />
+                <span>{category.filter}</span>
+                <h3>{category.label}</h3>
+                <p>{category.description}</p>
+              </a>
+              <div className="category-feature-products">
+                <div className="category-feature-heading">
+                  <h3>{category.label}??</h3>
+                  <a href={categoryHref}>?????</a>
+                </div>
+                <div className="category-mini-grid">
+                  {showcaseProducts.map((product) => (
                     <a className="category-mini-card" href={productPath(product)} key={product.slug}>
                       <img src={product.image} alt={product.title} />
                       <strong>{product.title}</strong>
@@ -1362,10 +1418,11 @@ export function CategoryShowcase() {
                       </span>
                     </a>
                   ))}
+                </div>
               </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
     </section>
   );
@@ -1393,6 +1450,7 @@ export function FeaturedProductsSection() {
 }
 
 export function ProductGrid({ limit, showTools = true, initialFilter = "all", initialSearch = "" }) {
+  const content = usePageContent();
   const [search, setSearch] = useState(initialSearch);
   const [filter, setFilter] = useState(initialFilter);
   const [sort, setSort] = useState("featured");
@@ -1424,6 +1482,19 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
       window.removeEventListener("storage", syncCatalog);
     };
   }, []);
+
+  const categoryFilterOptions = useMemo(() => {
+    const liveCategories = Array.isArray(content.categories)
+      ? content.categories
+          .filter((category) => category && category.filter)
+          .map((category) => ({
+            value: String(category.filter),
+            label: category.label || String(category.filter)
+          }))
+      : [];
+
+    return [{ value: "all", label: "全部商品" }, ...liveCategories];
+  }, [content.categories]);
 
   const visibleProducts = useMemo(() => {
     const searchText = search.trim().toLowerCase();
@@ -1464,13 +1535,11 @@ export function ProductGrid({ limit, showTools = true, initialFilter = "all", in
           <label>
             <span>筛选</span>
             <select value={filter} onChange={(event) => setFilter(event.target.value)}>
-              <option value="all">全部商品</option>
-              <option value="custom">Logo 定制</option>
-              <option value="lifeguard">救生员帽</option>
-              <option value="beach">海滩草帽</option>
-              <option value="surf">冲浪与海滩</option>
-              <option value="wholesale">批发采购</option>
-              <option value="fishing">钓鱼户外</option>
+              {categoryFilterOptions.map((option) => (
+                <option value={option.value} key={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </label>
           <label>
@@ -1709,11 +1778,12 @@ export function ReviewsMarquee() {
 
 export function FaqSection() {
   const content = usePageContent();
+  const faqIntro = content.faqIntro || getDefaultPageContent().faqIntro;
   return (
     <section className="faq-section">
       <div className="section-heading">
-        <p className="eyebrow">常见问题</p>
-        <h2>购买前先了解</h2>
+        <p className="eyebrow">{faqIntro.eyebrow}</p>
+        <h2>{faqIntro.title}</h2>
       </div>
       <div className="faq-list">
         {(Array.isArray(content.faqs) ? content.faqs : []).filter(Boolean).map((item, index) => (
@@ -1866,5 +1936,4 @@ function Rating({ rating, count }) {
     </div>
   );
 }
-
 

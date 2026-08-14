@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { categories, faqs, heroSlides, products, reviews, servicePromises } from "../data";
@@ -45,9 +45,13 @@ function getDefaultPageContent() {
   return {
     heroSlides: heroSlides.map((slide) => ({ secondaryCta: "查看定制款", secondaryHref: "/shop?filter=custom", ...slide })),
     servicePromises: servicePromises.map((item) => ({ ...item })),
-    categories: categories.map((item) => ({ ...item })),
+    categories: categories.map((item) => ({ ...item, productSlugs: Array.isArray(item.productSlugs) ? item.productSlugs : [] })),
     reviews: reviews.map((item) => ({ ...item })),
     faqs: faqs.map((item) => ({ ...item })),
+    faqIntro: {
+      eyebrow: "常见问题",
+      title: "购买前先了解"
+    },
     shopHero: {
       eyebrow: "全部商品",
       title: "草帽商店",
@@ -102,6 +106,7 @@ function mergePageContent(saved = {}) {
     categories: mergeList(source.categories, defaults.categories),
     reviews: mergeList(source.reviews, defaults.reviews),
     faqs: mergeList(source.faqs, defaults.faqs),
+    faqIntro: { ...defaults.faqIntro, ...asObject(source.faqIntro) },
     shopHero: { ...defaults.shopHero, ...asObject(source.shopHero) },
     categoryIntro: { ...defaults.categoryIntro, ...asObject(source.categoryIntro) },
     featured: { ...defaults.featured, ...asObject(source.featured) },
@@ -1043,6 +1048,10 @@ export default function AdminPage() {
 
               <div className="admin-editor-section">
                 <div className="admin-editor-heading"><h3>FAQ 问答</h3><button type="button" onClick={() => addPageListItem("faqs", { question: "新的问题", answer: "这里填写回答" })}>新增 FAQ</button></div>
+                  <div className="admin-form-grid">
+                    <label>FAQ 小标题<input value={editableContent.faqIntro?.eyebrow || ""} onChange={(event) => updatePageSection("faqIntro", "eyebrow", event.target.value)} /></label>
+                    <label>FAQ 主标题<input value={editableContent.faqIntro?.title || ""} onChange={(event) => updatePageSection("faqIntro", "title", event.target.value)} /></label>
+                  </div>
                 <div className="admin-editor-stack">
                   {(Array.isArray(pageContent.faqs) ? pageContent.faqs : []).map((item, index) => (
                     <article className="admin-compact-editor admin-compact-editor--faq" key={`faq-${index}`}>
