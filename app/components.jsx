@@ -367,6 +367,16 @@ function writeJson(key, value, eventName = "lpp-store-change") {
   window.dispatchEvent(new Event(eventName));
 }
 
+function readArrayJson(key, fallback = []) {
+  const value = readJson(key, fallback);
+  return Array.isArray(value) ? value : fallback;
+}
+
+function readObjectJson(key, fallback = {}) {
+  const value = readJson(key, fallback);
+  return value && typeof value === "object" && !Array.isArray(value) ? value : fallback;
+}
+
 function getDefaultPageContent() {
   return {
     heroSlides: heroSlides.map((slide) => ({
@@ -533,16 +543,16 @@ function getConfiguredSiteTitle(language = "zh-CN") {
 }
 
 function getCartCount() {
-  const cart = readJson(STORAGE_KEYS.cart, {});
-  return Object.values(cart).reduce((sum, item) => sum + Number(item.qty || 0), 0);
+  const cart = readObjectJson(STORAGE_KEYS.cart, {});
+  return Object.values(cart).reduce((sum, item) => sum + Number(item?.qty || 0), 0);
 }
 
 function getListCount(key) {
-  return readJson(key, []).length;
+  return readArrayJson(key, []).length;
 }
 
 function addToCart(slug, qty = 1) {
-  const cart = readJson(STORAGE_KEYS.cart, {});
+  const cart = readObjectJson(STORAGE_KEYS.cart, {});
   const current = cart[slug]?.qty || 0;
   cart[slug] = { slug, qty: current + qty };
   writeJson(STORAGE_KEYS.cart, cart);
@@ -570,7 +580,7 @@ function mergeManagedProducts(remoteProducts, localProducts) {
 }
 
 function toggleListItem(key, slug) {
-  const current = readJson(key, []);
+  const current = readArrayJson(key, []);
   const next = current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug];
   writeJson(key, next);
   return next.includes(slug);
@@ -1602,8 +1612,8 @@ export function ProductCard({ product }) {
   const detailTarget = product.productLink && /^https?:\/\//i.test(product.productLink) ? "_blank" : undefined;
 
   useEffect(() => {
-    setWished(readJson(STORAGE_KEYS.wishlist, []).includes(product.slug));
-    setCompared(readJson(STORAGE_KEYS.compare, []).includes(product.slug));
+    setWished(readArrayJson(STORAGE_KEYS.wishlist, []).includes(product.slug));
+    setCompared(readArrayJson(STORAGE_KEYS.compare, []).includes(product.slug));
   }, [product.slug]);
 
   function handleAddToCart() {
@@ -1661,8 +1671,8 @@ export function ProductDetailView({ product, relatedProducts = [] }) {
   const [compared, setCompared] = useState(false);
 
   useEffect(() => {
-    setWished(readJson(STORAGE_KEYS.wishlist, []).includes(product.slug));
-    setCompared(readJson(STORAGE_KEYS.compare, []).includes(product.slug));
+    setWished(readArrayJson(STORAGE_KEYS.wishlist, []).includes(product.slug));
+    setCompared(readArrayJson(STORAGE_KEYS.compare, []).includes(product.slug));
   }, [product.slug]);
 
   function handleCart() {
@@ -1865,14 +1875,14 @@ export function StorageCollectionView({ type, initialProductSlug, initialQuantit
     const sync = () => {
       const catalog = getClientProducts({ includeInactive: true });
       if (type === "cart") {
-        const cart = readJson(key, {});
+        const cart = readObjectJson(key, {});
         setItems(
           Object.values(cart)
-            .map((entry) => ({ product: catalog.find((item) => item.slug === entry.slug), qty: entry.qty }))
+            .map((entry) => ({ product: catalog.find((item) => item.slug === entry?.slug), qty: entry?.qty }))
             .filter((entry) => entry.product)
         );
       } else {
-        const slugs = readJson(key, []);
+        const slugs = readArrayJson(key, []);
         setItems(slugs.map((slug) => catalog.find((item) => item.slug === slug)).filter(Boolean));
       }
     };
@@ -1883,14 +1893,14 @@ export function StorageCollectionView({ type, initialProductSlug, initialQuantit
       writeJson(ADMIN_PRODUCTS_KEY, mergedProducts, "lpp-admin-products-change");
       const catalog = getClientProducts({ includeInactive: true, managedProducts: mergedProducts });
       if (type === "cart") {
-        const cart = readJson(key, {});
+        const cart = readObjectJson(key, {});
         setItems(
           Object.values(cart)
-            .map((entry) => ({ product: catalog.find((item) => item.slug === entry.slug), qty: entry.qty }))
+            .map((entry) => ({ product: catalog.find((item) => item.slug === entry?.slug), qty: entry?.qty }))
             .filter((entry) => entry.product)
         );
       } else {
-        const slugs = readJson(key, []);
+        const slugs = readArrayJson(key, []);
         setItems(slugs.map((slug) => catalog.find((item) => item.slug === slug)).filter(Boolean));
       }
     });
