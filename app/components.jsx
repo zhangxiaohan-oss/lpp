@@ -652,28 +652,31 @@ export function Header() {
   }, []);
 
   useEffect(() => {
- const syncTitleAndLanguage = () => window.requestAnimationFrame(() => applyDocumentLanguage(language));
- syncTitleAndLanguage();
- window.addEventListener(storage, syncTitleAndLanguage);
- window.addEventListener(lpp-admin-settings-change, syncTitleAndLanguage);
- return () => {
- window.removeEventListener(storage, syncTitleAndLanguage);
- window.removeEventListener(lpp-admin-settings-change, syncTitleAndLanguage);
- };
- }, [language]);
+    const syncTitleAndLanguage = () => {
+      window.requestAnimationFrame(() => applyDocumentLanguage(language));
+    };
 
- useEffect(() => {
- const syncPreferences = () => {
- try {
- setCurrency(window.localStorage.getItem(CURRENCY_KEY) === USD ? USD : CNY);
- setLanguage(window.localStorage.getItem(LANGUAGE_KEY) === en ? en : zh-CN);
- } catch {
- setCurrency(CNY);
- setLanguage(zh-CN);
- }
- };
+    syncTitleAndLanguage();
+    window.addEventListener("storage", syncTitleAndLanguage);
+    window.addEventListener("lpp-admin-settings-change", syncTitleAndLanguage);
+    return () => {
+      window.removeEventListener("storage", syncTitleAndLanguage);
+      window.removeEventListener("lpp-admin-settings-change", syncTitleAndLanguage);
+    };
+  }, [language]);
 
- syncPreferences();
+  useEffect(() => {
+    const syncPreferences = () => {
+      try {
+        setCurrency(window.localStorage.getItem(CURRENCY_KEY) === "USD" ? "USD" : "CNY");
+        setLanguage(window.localStorage.getItem(LANGUAGE_KEY) === "en" ? "en" : "zh-CN");
+      } catch {
+        setCurrency("CNY");
+        setLanguage("zh-CN");
+      }
+    };
+
+    syncPreferences();
     window.addEventListener("storage", syncPreferences);
     window.addEventListener(CURRENCY_EVENT, syncPreferences);
     window.addEventListener(LANGUAGE_EVENT, syncPreferences);
