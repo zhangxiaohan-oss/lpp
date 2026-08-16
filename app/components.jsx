@@ -290,75 +290,45 @@ Object.assign(translations, {
   "UPF 防晒": "UPF Sun Protection"
 });
 
-const reverseTranslations = Object.fromEntries(Object.entries(translations).map(([zh, en]) => [en, zh]));
+const reverseTranslations = Object.fromEntries(
+  Object.entries(translations).map(([zh, en]) => [en, zh])
+);
 
 function translateCopy(text, language) {
+  if (typeof text !== "string") return text ?? "";
   if (language === "en") return translations[text] || text;
   return reverseTranslations[text] || text;
 }
 
-function preserveWhitespace(original, replacement) {
-  const leading = original.match(/^\s*/)?.[0] || "";
-  const trailing = original.match(/\s*$/)?.[0] || "";
-  return `${leading}${replacement}${trailing}`;
-}
-
 function applyDocumentLanguage(language) {
   if (typeof document === "undefined") return;
-  const dictionary = language === "en" ? translations : reverseTranslations;
+  document.documentElement.lang = language === "en" ? "en" : "zh-CN";
   const titleKey = document.title.trim();
-  if (dictionary[titleKey]) {
-    document.title = dictionary[titleKey];
-  } else if (language === "en" && titleKey.includes("草帽品牌展示站")) {
-    document.title = titleKey.replace("草帽品牌展示站", "Straw Hat Brand Showcase");
-  } else if (language !== "en" && titleKey.includes("Straw Hat Brand Showcase")) {
-    document.title = titleKey.replace("Straw Hat Brand Showcase", "草帽品牌展示站");
+  const nextTitle = translateCopy(titleKey, language);
+  if (nextTitle) {
+    document.title = nextTitle;
   }
-
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-    acceptNode(node) {
-      const parent = node.parentElement;
-      if (!parent || ["SCRIPT", "STYLE", "NOSCRIPT", "SVG"].includes(parent.tagName)) {
-        return NodeFilter.FILTER_REJECT;
-      }
-      return NodeFilter.FILTER_ACCEPT;
-    }
-  });
-
-  const textNodes = [];
-  while (walker.nextNode()) textNodes.push(walker.currentNode);
-
-  textNodes.forEach((node) => {
-    const key = node.nodeValue.trim();
-    if (dictionary[key]) {
-      node.nodeValue = preserveWhitespace(node.nodeValue, dictionary[key]);
-    } else if (language === "en" && key.startsWith("数量：")) {
-      node.nodeValue = preserveWhitespace(node.nodeValue, key.replace("数量：", "Qty: "));
-    } else if (language !== "en" && key.startsWith("Qty: ")) {
-      node.nodeValue = preserveWhitespace(node.nodeValue, key.replace("Qty: ", "数量："));
-    } else if (language === "en" && key.endsWith("星评分")) {
-      node.nodeValue = preserveWhitespace(node.nodeValue, key.replace("星评分", "star rating"));
-    } else if (language !== "en" && key.endsWith("star rating")) {
-      node.nodeValue = preserveWhitespace(node.nodeValue, key.replace("star rating", "星评分"));
-    }
-  });
-
-  document.querySelectorAll("input[placeholder], textarea[placeholder]").forEach((field) => {
-    const next = dictionary[field.getAttribute("placeholder")];
-    if (next) field.setAttribute("placeholder", next);
-  });
 }
 
+const memoryStore = new Map();
+
 function readJson(key, fallback) {
+  if (memoryStore.has(key)) return memoryStore.get(key);
   if (typeof window === "undefined") return fallback;
   try {
-    return JSON.parse(window.localStorage.getItem(key) || JSON.stringify(fallback));
+    const raw = window.localStorage.getItem(key);
+    if (raw === null) return fallback;
+    const parsed = JSON.parse(raw);
+    memoryStore.set(key, parsed);
+    return parsed;
   } catch {
     return fallback;
   }
 }
 
 function writeJson(key, value, eventName = "lpp-store-change") {
+  memoryStore.set(key, value);
+  if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
   } catch {
@@ -682,24 +652,28 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    document.documentElement.lang = language === "en" ? "en" : "zh-CN";
-    const syncTitleAndLanguage = () => window.requestAnimationFrame(() => applyDocumentLanguage(language));
-    syncTitleAndLanguage();
-    window.addEventListener("storage", syncTitleAndLanguage);
-    window.addEventListener("lpp-admin-settings-change", syncTitleAndLanguage);
-    return () => {
-      window.removeEventListener("storage", syncTitleAndLanguage);
-      window.removeEventListener("lpp-admin-settings-change", syncTitleAndLanguage);
-    };
-  }, [language]);
+ const syncTitleAndLanguage = () => window.requestAnimationFrame(() => applyDocumentLanguage(language));
+ syncTitleAndLanguage();
+ window.addEventListener(storage, syncTitleAndLanguage);
+ window.addEventListener(lpp-admin-settings-change, syncTitleAndLanguage);
+ return () => {
+ window.removeEventListener(storage, syncTitleAndLanguage);
+ window.removeEventListener(lpp-admin-settings-change, syncTitleAndLanguage);
+ };
+ }, [language]);
 
-  useEffect(() => {
-    const syncPreferences = () => {
-      setCurrency(window.localStorage.getItem(CURRENCY_KEY) === "USD" ? "USD" : "CNY");
-      setLanguage(window.localStorage.getItem(LANGUAGE_KEY) === "en" ? "en" : "zh-CN");
-    };
+ useEffect(() => {
+ const syncPreferences = () => {
+ try {
+ setCurrency(window.localStorage.getItem(CURRENCY_KEY) === USD ? USD : CNY);
+ setLanguage(window.localStorage.getItem(LANGUAGE_KEY) === en ? en : zh-CN);
+ } catch {
+ setCurrency(CNY);
+ setLanguage(zh-CN);
+ }
+ };
 
-    syncPreferences();
+ syncPreferences();
     window.addEventListener("storage", syncPreferences);
     window.addEventListener(CURRENCY_EVENT, syncPreferences);
     window.addEventListener(LANGUAGE_EVENT, syncPreferences);
@@ -732,22 +706,27 @@ export function Header() {
   const currentLanguage = languageOptions.find((item) => item.code === language) || languageOptions[0];
   const liveNavItems = useMemo(() => {
     const liveCategories = Array.isArray(content.categories)
-      ? content.categories.filter(Boolean).map((category) => ({
-          label: category.label || "全部产品",
-          href:
-            typeof category.href === "string" && category.href.trim()
-              ? category.href
-              : category.filter
-                ? `/shop?filter=${encodeURIComponent(category.filter)}`
-                : "/shop"
-        }))
+      ? content.categories
+          .filter((category) => category && typeof category === "object")
+          .map((category) => ({
+            label:
+              typeof category.label === "string" && category.label.trim()
+                ? category.label
+                : "????",
+            href:
+              typeof category.href === "string" && category.href.trim()
+                ? category.href
+                : category.filter
+                  ? `/shop?filter=${encodeURIComponent(category.filter)}`
+                  : "/shop"
+          }))
       : [];
 
     return navItems.map((item) => {
       if (item.href !== "/shop" || !Array.isArray(item.children)) return item;
       return {
         ...item,
-        children: [{ label: "全部产品", href: "/shop" }, ...liveCategories]
+        children: [{ label: "????", href: "/shop" }, ...liveCategories]
       };
     });
   }, [content.categories]);
