@@ -300,6 +300,13 @@ function translateCopy(text, language) {
   return reverseTranslations[text] || text;
 }
 
+function cleanCategoryLabel(text, fallback = "未命名分类") {
+  if (typeof text !== "string") return fallback;
+  const trimmed = text.trim();
+  if (!trimmed || /^[?\uFF1F]+$/.test(trimmed)) return fallback;
+  return trimmed.replace(/[?\uFF1F]{2,}$/g, "").trim() || fallback;
+}
+
 function applyDocumentLanguage(language) {
   if (typeof document === "undefined") return;
   document.documentElement.lang = language === "en" ? "en" : "zh-CN";
@@ -712,10 +719,7 @@ export function Header() {
       ? content.categories
           .filter((category) => category && typeof category === "object")
           .map((category) => ({
-            label:
-              typeof category.label === "string" && category.label.trim()
-                ? category.label
-                : "????",
+            label: cleanCategoryLabel(category.label, "全部商品"),
             href:
               typeof category.href === "string" && category.href.trim()
                 ? category.href
@@ -729,7 +733,7 @@ export function Header() {
       if (item.href !== "/shop" || !Array.isArray(item.children)) return item;
       return {
         ...item,
-        children: [{ label: "????", href: "/shop" }, ...liveCategories]
+        children: [{ label: "全部商品", href: "/shop" }, ...liveCategories]
       };
     });
   }, [content.categories]);
@@ -1403,18 +1407,20 @@ export function CategoryShowcase() {
           });
           const showcaseProducts = (selectedProducts.length ? selectedProducts : fallbackProducts).slice(0, 6);
 
+          const categoryLabel = cleanCategoryLabel(category.label, "未命名分类");
+
           return (
-            <article className="category-feature-row" key={category.filter || category.href || category.label}>
+            <article className="category-feature-row" key={category.filter || category.href || categoryLabel}>
               <a className="category-feature-main" href={categoryHref}>
-                <img src={category.image} alt={category.label} />
+                <img src={category.image} alt={categoryLabel} />
                 <span>{category.filter}</span>
-                <h3>{category.label}</h3>
+                <h3>{categoryLabel}</h3>
                 <p>{category.description}</p>
               </a>
               <div className="category-feature-products">
                 <div className="category-feature-heading">
-                  <h3>{category.label}??</h3>
-                  <a href={categoryHref}>?????</a>
+                  <h3>{categoryLabel}</h3>
+                  <a href={categoryHref}>{translateCopy("查看该系列", typeof window !== "undefined" && window.localStorage.getItem(LANGUAGE_KEY) === "en" ? "en" : "zh-CN")}</a>
                 </div>
                 <div className="category-mini-grid">
                   {showcaseProducts.map((product) => (
