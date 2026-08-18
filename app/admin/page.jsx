@@ -430,7 +430,6 @@ function time(value) {
 }
 
 export default function AdminPage() {
-  const [isHydrated, setIsHydrated] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [loginForm, setLoginForm] = useState({ username: "superadmin", password: "lpp-demo" });
@@ -465,10 +464,6 @@ export default function AdminPage() {
     settings: "系统设置"
   };
   const tabTitle = tabTitles[tab] || "后台管理";
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
 
   useEffect(() => {
     const savedUsers = readJson(USER_KEY, []);
@@ -719,7 +714,6 @@ export default function AdminPage() {
 
   function submitLogin(event) {
     event.preventDefault();
-    if (!isHydrated) return;
     login();
   }
 
@@ -741,7 +735,6 @@ export default function AdminPage() {
 
   function submitFirstPassword(event) {
     event.preventDefault();
-    if (!isHydrated) return;
     completeFirstPassword();
   }
 
@@ -894,10 +887,9 @@ export default function AdminPage() {
           <h1>后台管理登录</h1>
           <p>演示账号：superadmin / lpp-demo，manager / lpp-demo。首次登录会强制修改密码。</p>
           {loginError ? <div className="admin-error">{loginError}</div> : null}
-          {!isHydrated ? <p className="admin-hint">正在连接后台，请稍候...</p> : null}
           <label>账号<input autoComplete="username" value={loginForm.username} onChange={(event) => setLoginForm((current) => ({ ...current, username: event.target.value }))} /></label>
           <label>密码<input autoComplete="current-password" type="password" value={loginForm.password} onChange={(event) => setLoginForm((current) => ({ ...current, password: event.target.value }))} /></label>
-          <button type="button" disabled={!isHydrated} onClick={login}>{isHydrated ? "进入后台" : "正在加载..."}</button>
+          <button type="submit">进入后台</button>
         </form>
       </main>
     );
@@ -911,10 +903,9 @@ export default function AdminPage() {
           <h1>首次登录修改密码</h1>
           <p>{currentUser.name}，为了账号安全，请先设置新密码。修改完成后才会进入后台。</p>
           {passwordError ? <div className="admin-error">{passwordError}</div> : null}
-          {!isHydrated ? <p className="admin-hint">正在连接后台，请稍候...</p> : null}
           <label>新密码<input autoComplete="new-password" type="password" value={passwordForm.next} onChange={(event) => setPasswordForm((current) => ({ ...current, next: event.target.value }))} /></label>
           <label>确认新密码<input autoComplete="new-password" type="password" value={passwordForm.confirm} onChange={(event) => setPasswordForm((current) => ({ ...current, confirm: event.target.value }))} /></label>
-          <button type="button" disabled={!isHydrated} onClick={completeFirstPassword}>{isHydrated ? "保存并进入后台" : "正在加载..."}</button>
+          <button type="submit">保存并进入后台</button>
         </form>
       </main>
     );
