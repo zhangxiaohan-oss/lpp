@@ -365,6 +365,10 @@ function getDefaultPageContent() {
     categories: categories.map((item) => ({ ...item, productSlugs: Array.isArray(item.productSlugs) ? item.productSlugs : [] })),
     reviews: reviews.map((item) => ({ ...item })),
     faqs: faqs.map((item) => ({ ...item })),
+    faqIntro: {
+      eyebrow:  常见问题,
+      title: 购买前先了解
+    },
     shopHero: {
       eyebrow: "全部商品",
       title: "草帽商店",
@@ -419,6 +423,7 @@ function mergePageContent(saved = {}) {
     categories: mergeList(source.categories, defaults.categories),
     reviews: mergeList(source.reviews, defaults.reviews),
     faqs: mergeList(source.faqs, defaults.faqs),
+    faqIntro: { ...defaults.faqIntro, ...asObject(source.faqIntro) },
     shopHero: { ...defaults.shopHero, ...asObject(source.shopHero) },
     categoryIntro: { ...defaults.categoryIntro, ...asObject(source.categoryIntro) },
     featured: { ...defaults.featured, ...asObject(source.featured) },
