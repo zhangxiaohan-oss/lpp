@@ -1247,15 +1247,15 @@ export function Footer() {
       </div>
       <div className="footer-links">
         <a href="/shop">商店</a>
-        <a href="/customize">订单追踪</a>
+        <a href="/customize">定制服务</a>
         <a href="/tracking">订单追踪</a>
-        <a href="/contact">订单追踪</a>
+        <a href="/contact">联系我们</a>
       </div>
       <div className="footer-links">
         <a href="/wishlist">收藏夹</a>
-        <a href="/compare">订单追踪</a>
+        <a href="/compare">商品对比</a>
         <a href="/cart">购物车</a>
-        <a href="/checkout">订单追踪</a>
+        <a href="/checkout">结账演示</a>
       </div>
     </footer>
   );
